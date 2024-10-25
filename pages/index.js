@@ -11,13 +11,14 @@ export default function Home({ initialState }) {
   useEffect(() => {
     const fetchKeywords = async () => {
       try {
+        const siteUrl = "sc-domain:esdeveniments.cat";
         const response = await fetch("/api/getKeywordPerformance", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            siteUrl: "https://esdeveniments.cat",
+            siteUrl,
             startDate: "2024-01-01",
             endDate: "2024-12-31",
           }),

@@ -16,7 +16,7 @@ export async function fetchKeywordPerformance(
   siteUrl,
   startDate,
   endDate,
-  dimensions = ["query"],
+  dimensions = ["query", "page"],
   rowLimit = 1000
 ) {
   try {
