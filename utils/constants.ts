@@ -21,7 +21,7 @@ import {
 
 export const MAX_RESULTS = 15;
 
-export const DAYS = [
+export const DAYS: string[] = [
   "Diumenge",
   "Dilluns",
   "Dimarts",
@@ -31,7 +31,7 @@ export const DAYS = [
   "Dissabte",
 ];
 
-export const MONTHS = [
+export const MONTHS: string[] = [
   "gener",
   "febrer",
   "març",
@@ -46,7 +46,7 @@ export const MONTHS = [
   "desembre",
 ];
 
-export const MONTHS_URL = [
+export const MONTHS_URL: string[] = [
   "gener",
   "febrer",
   "marc",
@@ -61,7 +61,11 @@ export const MONTHS_URL = [
   "desembre",
 ];
 
-export const CATEGORIES = {
+export interface Categories {
+  [key: string]: string;
+}
+
+export const CATEGORIES: Categories = {
   "Festes Majors": "Festa Major",
   Festivals: "Festival",
   Familiar: "Familiar",
@@ -73,35 +77,51 @@ export const CATEGORIES = {
   Espectacles: "Espectacles",
 };
 
-export const SEARCH_TERMS_SUBSET = [
+export const SEARCH_TERMS_SUBSET: string[] = [
   "Festa Major",
   "Festival",
   "Familiar",
   "Música",
 ];
 
-export const CATEGORY_NAMES_MAP = Object.fromEntries(
+export const CATEGORY_NAMES_MAP: Categories = Object.fromEntries(
   Object.entries(CATEGORIES).map(([displayName, searchTerm]) => [
     searchTerm,
     displayName,
   ])
 );
 
-export const BYDATES = [
+interface DateOption {
+  value: string;
+  label: string;
+}
+
+export const BYDATES: DateOption[] = [
   { value: "avui", label: "Avui" },
   { value: "dema", label: "Demà" },
   { value: "cap-de-setmana", label: "Cap de setmana" },
   { value: "setmana", label: "Aquesta setmana" },
 ];
 
-export const dateFunctions = {
+interface DateFunctions {
+  [key: string]: string;
+}
+
+export const dateFunctions: DateFunctions = {
   avui: "today",
   dema: "tomorrow",
   setmana: "week",
   "cap-de-setmana": "weekend",
 };
 
-export const DISTANCES = [1, 5, 10, 30, 50];
+export const DISTANCES: number[] = [5, 10, 25, 50, 100];
+
+export interface RegionData {
+  label: string;
+  towns: string[];
+}
+
+export type CitiesData = Map<string, RegionData>;
 
 export const CITIES_DATA = new Map([
   barcelones,

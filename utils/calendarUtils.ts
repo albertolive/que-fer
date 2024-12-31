@@ -1,12 +1,28 @@
-const formatDate = (date) =>
+interface CalendarParams {
+  title: string;
+  description: string;
+  location: string;
+  startDate: string | Date;
+  endDate: string | Date;
+  canonical: string;
+}
+
+interface CalendarUrls {
+  google: string;
+  outlook: string;
+  ical: string;
+}
+
+const formatDate = (date: string | Date): string =>
   new Date(date).toISOString().replace(/-|:|\.\d+/g, "");
 
-const encodeParams = (params) =>
+const encodeParams = (params: Record<string, string>): string =>
   Object.entries(params)
     .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
     .join("&");
 
-const createUrl = (base, params) => `${base}?${encodeParams(params)}`;
+const createUrl = (base: string, params: Record<string, string>): string =>
+  `${base}?${encodeParams(params)}`;
 
 export const generateCalendarUrls = ({
   title,
@@ -15,7 +31,7 @@ export const generateCalendarUrls = ({
   startDate,
   endDate,
   canonical,
-}) => {
+}: CalendarParams): CalendarUrls => {
   const start = formatDate(startDate);
   const end = formatDate(endDate);
 
