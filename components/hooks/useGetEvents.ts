@@ -1,10 +1,33 @@
 import { captureException } from "@sentry/nextjs";
 import useSWR, { preload } from "swr";
+import { Event } from "@store";
 
-const fetcher = ([url, pageIndex, q, maxResults, town]) =>
-  fetch(
+interface EventsResponse {
+  events: Event[];
+}
+
+interface EventsProps {
+  events?: Event[];
+}
+
+interface UseGetEventsProps {
+  props?: EventsProps;
+  pageIndex: number;
+  q?: string;
+  refreshInterval?: boolean;
+  maxResults?: number;
+  town?: string;
+}
+
+const fetcher = async ([url, pageIndex, q, maxResults, town]: readonly [string, number, string, number, string]): Promise<EventsResponse> => {
+  const response = await fetch(
     `${url}?page=${pageIndex}&q=${q}&maxResults=${maxResults}&town=${town}`
-  ).then((res) => res.json());
+  );
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  return response.json();
+};
 
 export const useGetEvents = ({
   props = {},
@@ -13,13 +36,13 @@ export const useGetEvents = ({
   refreshInterval = true,
   maxResults = 10,
   town = "",
-}) => {
+}: UseGetEventsProps) => {
   preload(["/api/getEvents", pageIndex, q, maxResults, town], fetcher);
 
-  const hasFallbackData = props?.events?.length > 0;
+  const hasFallbackData = (props?.events?.length ?? 0) > 0;
 
-  return useSWR(["/api/getEvents", pageIndex, q, maxResults, town], fetcher, {
-    fallbackData: hasFallbackData ? props : {}, // Use fallbackData only if props has events
+  return useSWR<EventsResponse>(["/api/getEvents", pageIndex, q, maxResults, town], fetcher, {
+    fallbackData: hasFallbackData ? { ...props, events: props.events || [] } : undefined,
     refreshInterval: refreshInterval ? 300000 : 0,
     revalidateOnFocus: true,
     revalidateOnReconnect: true,
@@ -32,7 +55,7 @@ export const useGetEvents = ({
     focusThrottleInterval: 5000, // Throttle focus revalidation to every 5 seconds
     errorRetryInterval: 5000, // Retry errors every 5 seconds
     errorRetryCount: 3, // Retry up to 3 times
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error("Error fetching events:", error);
       captureException(error);
     },

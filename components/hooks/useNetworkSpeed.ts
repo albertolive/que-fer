@@ -1,33 +1,50 @@
 import { useState, useEffect } from "react";
 
-export const useNetworkSpeed = () => {
-  const [quality, setQuality] = useState(70); // Default quality
+interface NetworkInformation extends EventTarget {
+  effectiveType: string;
+  addEventListener: (type: string, listener: EventListener) => void;
+  removeEventListener: (type: string, listener: EventListener) => void;
+}
+
+declare global {
+  interface Navigator {
+    connection?: NetworkInformation;
+    mozConnection?: NetworkInformation;
+    webkitConnection?: NetworkInformation;
+  }
+}
+
+export const useNetworkSpeed = (): number => {
+  const [quality, setQuality] = useState<number>(70); // Default quality
 
   useEffect(() => {
-    const connection =
-      navigator.connection ||
-      navigator.mozConnection ||
-      navigator.webkitConnection;
+    const connection: NetworkInformation | undefined =
+      ((navigator as Navigator).connection ||
+      (navigator as Navigator).mozConnection ||
+      (navigator as Navigator).webkitConnection);
 
     if (!connection) {
       console.log("Network Information API not supported");
-      return; // Exit if the connection API is not supported
+      return setQuality(70); // Exit if the connection API is not supported and set default quality
     }
 
-    const setConnectionQuality = () => {
-      if (
-        connection.effectiveType.includes("slow-2g") ||
-        connection.effectiveType.includes("2g")
-      ) {
-        setQuality(30); // Lower quality for slower connections
-      } else if (connection.effectiveType.includes("3g")) {
-        setQuality(50); // Medium quality for 3G
-      } else if (connection.effectiveType.includes("4g")) {
-        setQuality(80); // High quality for 4G
-      } else if (connection.effectiveType.includes("wifi")) {
-        setQuality(100); // Full quality for WiFi
-      } else {
-        setQuality(70); // Default for other cases
+    const setConnectionQuality = (): void => {
+      switch (connection.effectiveType) {
+        case "slow-2g":
+        case "2g":
+          setQuality(30);
+          break;
+        case "3g":
+          setQuality(50);
+          break;
+        case "4g":
+          setQuality(80);
+          break;
+        case "wifi":
+          setQuality(100);
+          break;
+        default:
+          setQuality(70);
       }
     };
 

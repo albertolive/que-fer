@@ -1,15 +1,22 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, RefObject } from "react";
 
-function useOnScreen(ref, options = {}) {
-  const { rootMargin = "0px", freezeOnceVisible = false } = options;
-  const [isIntersecting, setIntersecting] = useState(false);
-  const observerRef = useRef(null);
-  const frozenRef = useRef(false);
+interface UseOnScreenOptions extends IntersectionObserverInit {
+  freezeOnceVisible?: boolean;
+}
+
+function useOnScreen<T extends Element>(
+  ref: RefObject<T>,
+  options: UseOnScreenOptions = {}
+): boolean {
+  const { rootMargin = "0px", freezeOnceVisible = false, ...restOptions } = options;
+  const [isIntersecting, setIntersecting] = useState<boolean>(false);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const frozenRef = useRef<boolean>(false);
 
   useEffect(() => {
     if (!("IntersectionObserver" in window)) {
       console.warn("IntersectionObserver is not supported by this browser.");
-      return;
+      return setIntersecting(false);
     }
 
     const currentRef = ref.current;
@@ -17,7 +24,7 @@ function useOnScreen(ref, options = {}) {
       return;
     }
 
-    const updateEntry = ([entry]) => {
+    const updateEntry = ([entry]: IntersectionObserverEntry[]): void => {
       if (frozenRef.current) {
         return;
       }
@@ -29,9 +36,9 @@ function useOnScreen(ref, options = {}) {
       }
     };
 
-    const observerParams = {
+    const observerParams: IntersectionObserverInit = {
       rootMargin,
-      ...options,
+      ...restOptions,
     };
 
     const observer = new IntersectionObserver(updateEntry, observerParams);
@@ -42,15 +49,7 @@ function useOnScreen(ref, options = {}) {
     return () => {
       observer.disconnect();
     };
-  }, [ref, rootMargin, freezeOnceVisible, options]);
-
-  useEffect(() => {
-    return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-      }
-    };
-  }, []);
+  }, [ref, rootMargin, freezeOnceVisible, restOptions]);
 
   return isIntersecting;
 }
