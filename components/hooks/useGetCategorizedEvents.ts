@@ -1,20 +1,46 @@
 import { captureException } from "@sentry/nextjs";
 import useSWR, { preload } from "swr";
 
-const fetcher = ([url, searchTerms, maxResults]) =>
-  fetch(
+interface Event {
+  id: string;
+  title: string;
+  description: string;
+  startDate: string;
+  endDate?: string;
+  location: string;
+  url: string;
+  imageUrl?: string;
+  isAd?: boolean;
+}
+
+interface GetCategorizedEventsProps {
+  props?: Record<string, any>;
+  searchTerms: string[];
+  maxResults?: number;
+  refreshInterval?: boolean;
+}
+
+interface GetCategorizedEventsResponse {
+  events: Event[];
+  error?: any;
+}
+
+const fetcher = async ([url, searchTerms, maxResults]: [string, string[], number]): Promise<GetCategorizedEventsResponse> => {
+  const response = await fetch(
     `${url}?searchTerms=${searchTerms.join(",")}&maxResults=${maxResults}`
-  ).then((res) => res.json());
+  );
+  return response.json();
+};
 
 export const useGetCategorizedEvents = ({
   props = {},
   searchTerms,
   maxResults = 10,
   refreshInterval = true,
-}) => {
+}: GetCategorizedEventsProps) => {
   preload(["/api/getCategorizedEvents", searchTerms, maxResults], fetcher);
 
-  return useSWR(
+  return useSWR<GetCategorizedEventsResponse>(
     ["/api/getCategorizedEvents", searchTerms, maxResults],
     fetcher,
     {
@@ -22,15 +48,15 @@ export const useGetCategorizedEvents = ({
       refreshInterval: refreshInterval ? 300000 : 0,
       revalidateOnFocus: true,
       revalidateOnReconnect: true,
-      revalidateIfStale: true, // Revalidate if data is stale
+      revalidateIfStale: true,
       refreshWhenOffline: false,
       suspense: true,
       keepPreviousData: true,
-      revalidateOnMount: false, // Avoid revalidating on mount
-      dedupingInterval: 2000, // Deduplicate requests within 2 seconds
-      focusThrottleInterval: 5000, // Throttle focus revalidation to every 5 seconds
-      errorRetryInterval: 5000, // Retry errors every 5 seconds
-      errorRetryCount: 3, // Retry up to 3 times
+      revalidateOnMount: false,
+      dedupingInterval: 2000,
+      focusThrottleInterval: 5000,
+      errorRetryInterval: 5000,
+      errorRetryCount: 3,
       onError: (error) => {
         console.error("Error fetching events:", error);
         captureException(error);

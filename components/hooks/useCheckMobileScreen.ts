@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 
-const useCheckMobileScreen = () => {
-  const [width, setWidth] = useState(
-    typeof window !== "undefined" && window.innerWidth
+const useCheckMobileScreen = (): boolean => {
+  const [width, setWidth] = useState<number | undefined>(
+    typeof window !== "undefined" ? window.innerWidth : undefined
   );
-  const handleWindowSizeChange = () => {
+
+  const handleWindowSizeChange = (): void => {
     setWidth(window.innerWidth);
   };
 
@@ -15,7 +16,7 @@ const useCheckMobileScreen = () => {
     };
   }, []);
 
-  return width <= 768;
+  return width !== undefined ? width <= 768 : false;
 };
 
 export default useCheckMobileScreen;
