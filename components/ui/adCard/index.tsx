@@ -1,10 +1,14 @@
-import { useState, memo, lazy } from "react";
+import { useState, memo, lazy, ReactNode } from "react";
 import GoogleAdsenseContainer from "../GoogleAdsense";
 import CardLoading from "@components/ui/cardLoading";
 
 const AdBoard = lazy(() => import("../adBoard"));
 
-const AdContent = ({ children }) => (
+interface AdContentProps {
+  children: ReactNode;
+}
+
+const AdContent = ({ children }: AdContentProps): JSX.Element => (
   <>
     <div className="w-full flex flex-col justify-center bg-whiteCorp overflow-hidden cursor-pointer mb-2 md:border-t-0">
       <div className="bg-whiteCorp h-fit flex items-start gap-2 pr-4">
@@ -18,8 +22,8 @@ const AdContent = ({ children }) => (
   </>
 );
 
-export default memo(function AdCard({ event }) {
-  const [displayAd, setDisplayAd] = useState(true);
+const AdCard = (): JSX.Element => {
+  const [displayAd, setDisplayAd] = useState<boolean | undefined>(true);
 
   if (displayAd === undefined) return <CardLoading />;
 
@@ -31,7 +35,7 @@ export default memo(function AdCard({ event }) {
     );
 
   return (
-    <AdContent eventId={event.id}>
+    <AdContent>
       <GoogleAdsenseContainer
         id="ad-card-slot"
         slot="9209662295"
@@ -40,4 +44,6 @@ export default memo(function AdCard({ event }) {
       />
     </AdContent>
   );
-});
+};
+
+export default memo(AdCard);

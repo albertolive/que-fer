@@ -1,12 +1,21 @@
-import { useState, memo, lazy } from "react";
+import { useState, memo, lazy, Suspense } from "react";
 import GoogleAdsenseContainer from "../GoogleAdsense";
 
 const AdBoard = lazy(() => import("../adBoard"));
 
-export default memo(function AdArticle({ isDisplay = true, slot }) {
-  const [displayAd, setDisplayAd] = useState(true);
+interface AdArticleProps {
+  isDisplay?: boolean;
+  slot: string;
+}
 
-  if (!displayAd) return <AdBoard />;
+const AdArticle: React.FC<AdArticleProps> = memo(({ isDisplay = true, slot }) => {
+  const [displayAd, setDisplayAd] = useState<boolean>(true);
+
+  if (!displayAd) return (
+    <Suspense fallback={<div>Loading Ad...</div>}>
+      <AdBoard />
+    </Suspense>
+  );
 
   return (
     <div className="flex">
@@ -22,3 +31,7 @@ export default memo(function AdArticle({ isDisplay = true, slot }) {
     </div>
   );
 });
+
+AdArticle.displayName = "AdArticle";
+
+export default AdArticle;

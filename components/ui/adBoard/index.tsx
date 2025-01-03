@@ -1,4 +1,6 @@
-export default function AdBoard() {
+import { memo } from 'react';
+
+function AdBoard(): JSX.Element {
   return (
     <div className="flex flex-col items-center justify-center h-56 w-full bg-yellow-100 border border-yellow-300 rounded-lg p-4 text-center">
       <p className="text-lg font-semibold text-yellow-800">
@@ -11,7 +13,11 @@ export default function AdBoard() {
       </p>
       <p className="text-sm text-yellow-700 mt-2">
         Si estàs interessat a anunciar-te aquí,{" "}
-        <a className="text-primary" href="mailto:hola@esdeveniments.cat">
+        <a 
+          className="text-primary" 
+          href="mailto:hola@esdeveniments.cat"
+          rel="noopener noreferrer"
+        >
           contacta&apos;ns
         </a>{" "}
         per obtenir més informació.
@@ -19,3 +25,5 @@ export default function AdBoard() {
     </div>
   );
 }
+
+export default memo(AdBoard);
