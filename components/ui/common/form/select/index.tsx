@@ -1,27 +1,42 @@
 import { useState, useEffect } from "react";
 import CreatableSelect from "react-select/creatable";
-import { components } from "react-select";
+import { components, StylesConfig, GroupBase } from "react-select";
 import useStore from "@store";
+
+interface Option {
+  label: string;
+  value: string;
+}
+
+interface SelectComponentProps {
+  id: string;
+  title: string;
+  value?: Option | null;
+  // eslint-disable-next-line no-unused-vars
+  onChange: (value: Option | null) => void;
+  options: Option[];
+  isDisabled?: boolean;
+  isValidNewOption?: boolean;
+  isClearable?: boolean;
+  placeholder?: string;
+}
 
 const borderColor = "#CCC !important";
 
-const customStyles = {
+const customStyles: StylesConfig<Option, false, GroupBase<Option>> = {
   container: (provided) => ({
     ...provided,
     borderColor: "#FFF !important",
     border: "0px",
   }),
-  input: (provided, state) => ({
+  input: (provided) => ({
     ...provided,
     fontSize: "16px",
-    borderColor:
-      state.isFocused || state.isSelected ? borderColor : borderColor,
     padding: "0px 15px",
   }),
   control: (provided, state) => ({
     ...provided,
-    borderColor:
-      state.isFocused || state.isSelected ? borderColor : borderColor,
+    borderColor: state.isFocused ? borderColor : borderColor,
     boxShadow: state.isFocused ? "#000 !important" : "#CCC !important",
     borderRadius: "8px",
   }),
@@ -52,7 +67,7 @@ const customStyles = {
   }),
 };
 
-const Input = ({ ...props }) => (
+const Input = (props: any) => (
   <components.Input {...props} autoComplete="new-password" />
 );
 
@@ -66,19 +81,21 @@ export default function SelectComponent({
   isValidNewOption = false,
   isClearable = false,
   placeholder = "una opció",
-}) {
+}: SelectComponentProps) {
   const { setState } = useStore((state) => ({
     setState: state.setState,
   }));
-  const [selectedOption, setSelectedOption] = useState(initialValue);
+  const [selectedOption, setSelectedOption] = useState<Option | null>(
+    initialValue
+  );
 
   useEffect(() => {
     setSelectedOption(initialValue);
   }, [initialValue]);
 
-  const handleChange = (value) => {
+  const handleChange = (value: Option | null) => {
     setSelectedOption(value);
-    onChange(value || "");
+    onChange(value);
 
     if (value === null) {
       setState("page", 1);
@@ -92,12 +109,11 @@ export default function SelectComponent({
         {title}
       </label>
       <div className="mt-2">
-        <CreatableSelect
+        <CreatableSelect<Option>
           id={id}
           instanceId={id}
           isSearchable
           isClearable={isClearable}
-          autoComplete
           formatCreateLabel={(inputValue) => `Afegir nou lloc: "${inputValue}"`}
           placeholder={`Selecciona ${placeholder}`}
           defaultValue={selectedOption || initialValue}

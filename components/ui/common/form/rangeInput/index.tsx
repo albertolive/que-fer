@@ -1,8 +1,20 @@
+import { ChangeEvent } from "react";
 import XIcon from "@heroicons/react/outline/XIcon";
 
-const RangeInput = ({
+type RangeInputValue = string | number;
+
+interface RangeInputProps {
+  id: string;
+  min: number;
+  max: number;
+  value: number;
+  onChange: (e: ChangeEvent<HTMLInputElement> | { target: { value: RangeInputValue } }) => void;
+  label: string;
+  disabled?: boolean;
+}
+
+const RangeInput: React.FC<RangeInputProps> = ({
   id,
-  name,
   min,
   max,
   value,
@@ -11,7 +23,7 @@ const RangeInput = ({
   disabled,
 }) => {
   return (
-    <div id={id} name={name} className="w-full flex flex-col gap-4">
+    <div id={id} className="w-full flex flex-col gap-4">
       <div className="w-full flex justify-start items-center gap-2">
         <label htmlFor={id}>{label}</label>
         <div className="flex justify-start items-center text-primary gap-2 font-semibold font-barlow text-lg pb-1">
@@ -36,5 +48,7 @@ const RangeInput = ({
     </div>
   );
 };
+
+RangeInput.displayName = "RangeInput";
 
 export default RangeInput;

@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useState } from "react";
+import { forwardRef, useEffect, useState, ForwardRefRenderFunction } from "react";
 import DatePicker from "react-datepicker";
 import ChevronLeftIcon from "@heroicons/react/solid/ChevronLeftIcon";
 import ChevronRightIcon from "@heroicons/react/solid/ChevronRightIcon";
@@ -9,32 +9,65 @@ import setMinutes from "date-fns/setMinutes";
 
 import "react-datepicker/dist/react-datepicker.css";
 
+interface DatePickerComponentProps {
+  startDate?: Date;
+  endDate?: Date;
+  onChange: (field: "startDate" | "endDate", date: Date) => void;
+}
+
+interface DateComponentProps {
+  selected: Date;
+  startDate: Date;
+  endDate: Date;
+  onChange: (date: Date) => void;
+  selectsStart?: boolean;
+  selectsEnd?: boolean;
+  minDate?: Date;
+  className?: string;
+}
+
+interface ButtonInputProps {
+  value?: string;
+  onClick?: () => void;
+}
+
+interface CustomHeaderProps {
+  date: Date;
+  decreaseMonth: () => void;
+  increaseMonth: () => void;
+  prevMonthButtonDisabled: boolean;
+  nextMonthButtonDisabled: boolean;
+}
+
 export default function DatePickerComponent({
   startDate: initialStartDate,
   endDate: initialEndDate,
   onChange,
-}) {
-  const startingDate = initialStartDate
-    ? new Date(initialStartDate)
+}: DatePickerComponentProps) {
+  const parsedStartDate = initialStartDate instanceof Date ? initialStartDate : initialStartDate ? new Date(initialStartDate) : null;
+  const parsedEndDate = initialEndDate instanceof Date ? initialEndDate : initialEndDate ? new Date(initialEndDate) : null;
+
+  const startingDate = parsedStartDate && !isNaN(parsedStartDate.getTime())
+    ? parsedStartDate
     : setHours(setMinutes(new Date(), 0), 9);
-  const endingDate = initialEndDate
-    ? new Date(initialEndDate)
+  const endingDate = parsedEndDate && !isNaN(parsedEndDate.getTime())
+    ? parsedEndDate
     : setMinutes(new Date(startingDate), 60);
 
-  const [startDate, setStartDate] = useState(startingDate);
-  const [endDate, setEndDate] = useState(endingDate);
+  const [startDate, setStartDate] = useState<Date>(startingDate);
+  const [endDate, setEndDate] = useState<Date>(endingDate);
 
   useEffect(() => {
     if (startDate > endDate) setEndDate(setMinutes(startDate, 60));
   }, [startDate, endDate]);
 
-  const onChangeStart = (date) => {
+  const onChangeStart = (date: Date) => {
     onChange("startDate", date);
     setStartDate(date);
     setEndDate(new Date(date.getTime() + 60 * 60 * 1000));
   };
 
-  const onChangeEnd = (date) => {
+  const onChangeEnd = (date: Date) => {
     onChange("endDate", date);
     setEndDate(date);
   };
@@ -84,7 +117,7 @@ const DateComponent = ({
   selectsStart,
   selectsEnd,
   minDate,
-}) => {
+}: DateComponentProps) => {
   return (
     <DatePicker
       locale={ca}
@@ -108,7 +141,7 @@ const DateComponent = ({
         increaseMonth,
         prevMonthButtonDisabled,
         nextMonthButtonDisabled,
-      }) => (
+      }: CustomHeaderProps) => (
         <div className="flex justify-center items-center p-2">
           <span className="w-1/2 text-blackCorp uppercase">
             {format(date, "MMMM yyyy", { locale: ca })}
@@ -143,7 +176,10 @@ const DateComponent = ({
   );
 };
 
-const ButtonInput = forwardRef(({ value, onClick }, ref) => {
+const ButtonInput: ForwardRefRenderFunction<HTMLButtonElement, ButtonInputProps> = (
+  { value, onClick },
+  ref
+) => {
   return (
     <button
       onClick={onClick}
@@ -155,6 +191,7 @@ const ButtonInput = forwardRef(({ value, onClick }, ref) => {
       {value}
     </button>
   );
-});
+};
 
-ButtonInput.displayName = "ButtonInput";
+const ButtonInputWithRef = forwardRef(ButtonInput);
+ButtonInputWithRef.displayName = "ButtonInput";

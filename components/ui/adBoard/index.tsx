@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, JSX } from 'react';
 
 function AdBoard(): JSX.Element {
   return (

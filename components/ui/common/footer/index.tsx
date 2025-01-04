@@ -2,15 +2,30 @@ import React from "react";
 import ActiveLink from "@components/ui/common/link";
 import Social from "@components/ui/common/social";
 
-const navigation = [
+interface NavigationItem {
+  name: string;
+  href: string;
+  current: boolean;
+}
+
+interface SocialLinks {
+  web: string;
+  twitter: string;
+  instagram: string;
+  telegram: string;
+  facebook: string;
+  [key: string]: string;
+}
+
+const navigation: NavigationItem[] = [
   { name: "Agenda", href: "/", current: false },
   { name: "Publicar", href: "/publica", current: false },
   { name: "Qui som", href: "/qui-som", current: false },
   { name: "Arxiu", href: "/sitemap", current: false },
 ];
 
-export default function Footer() {
-  const links = {
+export default function Footer(): JSX.Element {
+  const links: SocialLinks = {
     web: "https://www.esdeveniments.cat",
     twitter: "https://twitter.com/esdeveniments_",
     instagram: "https://www.instagram.com/esdevenimentscat/",

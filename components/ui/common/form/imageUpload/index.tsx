@@ -2,27 +2,35 @@ import Image from "next/image";
 import { useRef, useState } from "react";
 import UploadIcon from "@heroicons/react/outline/UploadIcon";
 
-export default function ImageUploader({ value, onUpload, progress }) {
-  const fileSelect = useRef(null);
-  const [imgData, setImgData] = useState(value);
-  const [dragOver, setDragOver] = useState(false);
-  const [error, setError] = useState("");
+type AcceptedImageTypes = "image/jpeg" | "image/png" | "image/jpg" | "image/webp";
 
-  async function handleImageUpload() {
+interface ImageUploaderProps {
+  value: string | null;
+  onUpload: (file: File) => void;
+  progress: number;
+}
+
+const ImageUploader: React.FC<ImageUploaderProps> = ({ value, onUpload, progress }) => {
+  const fileSelect = useRef<HTMLInputElement>(null);
+  const [imgData, setImgData] = useState<string | null>(value);
+  const [dragOver, setDragOver] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
+
+  async function handleImageUpload(): Promise<void> {
     if (fileSelect.current) {
       fileSelect.current.click();
     }
   }
 
-  function handleFileValidation(file) {
-    const acceptedImageTypes = [
+  function handleFileValidation(file: File): boolean {
+    const acceptedImageTypes: AcceptedImageTypes[] = [
       "image/jpeg",
       "image/png",
       "image/jpg",
       "image/webp",
     ];
 
-    if (!acceptedImageTypes.includes(file.type)) {
+    if (!acceptedImageTypes.includes(file.type as AcceptedImageTypes)) {
       setError(
         "El fitxer seleccionat no és una imatge suportada. Si us plau, carregueu un fitxer en format JPEG, PNG, JPG, o WEBP."
       );
@@ -40,15 +48,15 @@ export default function ImageUploader({ value, onUpload, progress }) {
     return true;
   }
 
-  const onChangeImage = (e) => {
-    const file = e.target.files[0];
+  const onChangeImage = (e: React.ChangeEvent<HTMLInputElement>): void => {
+    const file = e.target.files?.[0];
     if (file && handleFileValidation(file)) {
       updateImage(file);
       onUpload(file);
     }
   };
 
-  const handleDrop = (e) => {
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>): void => {
     e.preventDefault();
     e.stopPropagation();
     setDragOver(false);
@@ -60,10 +68,10 @@ export default function ImageUploader({ value, onUpload, progress }) {
     }
   };
 
-  const updateImage = (file) => {
+  const updateImage = (file: File): void => {
     const reader = new FileReader();
     reader.addEventListener("load", () => {
-      setImgData(reader.result);
+      setImgData(reader.result as string);
     });
     reader.readAsDataURL(file);
   };
@@ -118,7 +126,6 @@ export default function ImageUploader({ value, onUpload, progress }) {
             className="bg-whiteCorp rounded-full p-1 hover:bg-primary"
           >
             <svg
-              title="Esborra imatge"
               xmlns="http://www.w3.org/2000/svg"
               className="h-6 w-6 text-blackCorp hover:text-whiteCorp"
               fill="none"
@@ -135,8 +142,8 @@ export default function ImageUploader({ value, onUpload, progress }) {
           </button>
           <Image
             alt="Imatge"
-            height="100"
-            width="100"
+            height={100}
+            width={100}
             className="object-contain"
             src={imgData}
             style={{
@@ -148,4 +155,8 @@ export default function ImageUploader({ value, onUpload, progress }) {
       )}
     </div>
   );
-}
+};
+
+ImageUploader.displayName = "ImageUploader";
+
+export default ImageUploader;

@@ -1,4 +1,4 @@
-import { useState, memo, lazy, Suspense } from "react";
+import { useState, memo, lazy, Suspense, FC } from "react";
 import GoogleAdsenseContainer from "../GoogleAdsense";
 
 const AdBoard = lazy(() => import("../adBoard"));
@@ -8,7 +8,7 @@ interface AdArticleProps {
   slot: string;
 }
 
-const AdArticle: React.FC<AdArticleProps> = memo(({ isDisplay = true, slot }) => {
+const AdArticle: FC<AdArticleProps> = memo(({ isDisplay = true, slot }) => {
   const [displayAd, setDisplayAd] = useState<boolean>(true);
 
   if (!displayAd) return (
