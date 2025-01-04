@@ -1,4 +1,6 @@
-function CardLoading() {
+import { memo } from 'react';
+
+function CardLoading(): JSX.Element {
   return (
     <div className="flex flex-col justify-center bg-whiteCorp overflow-hidden cursor-pointer mb-10">
       {/* Title */}
@@ -44,4 +46,4 @@ function CardLoading() {
   );
 }
 
-export default CardLoading;
+export default memo(CardLoading);

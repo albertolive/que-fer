@@ -1,6 +1,7 @@
 import { memo } from "react";
 import dynamic from "next/dynamic";
 import CardContent from "@components/ui/common/cardContent";
+import { Event } from "@store";
 
 const CardHorizontalLoading = dynamic(
   () => import("@components/ui/cardLoading"),
@@ -22,19 +23,25 @@ const AdCard = dynamic(() => import("@components/ui/adCard"), {
   ssr: false,
 });
 
-function CardHorizontal({ event, isLoading, isPriority }) {
+interface CardHorizontalProps {
+  event: Event;
+  isLoading?: boolean;
+  isPriority?: boolean;
+}
+
+const CardHorizontal: React.FC<CardHorizontalProps> = ({ event, isLoading, isPriority }) => {
   if (isLoading) return <CardHorizontalLoading />;
 
   if (event.isAd) {
-    return <AdCard event={event} />;
+    return <AdCard />;
   }
 
   return (
     <CardContent event={event} isPriority={isPriority} isHorizontal={true} />
   );
-}
+};
 
-function areEqual(prevProps, nextProps) {
+const areEqual = (prevProps: CardHorizontalProps, nextProps: CardHorizontalProps): boolean => {
   if (!prevProps.event && !nextProps.event) {
     return (
       prevProps.isLoading === nextProps.isLoading &&
@@ -51,6 +58,8 @@ function areEqual(prevProps, nextProps) {
     prevProps.isPriority === nextProps.isPriority &&
     prevProps.event.id === nextProps.event.id
   );
-}
+};
+
+CardHorizontal.displayName = "CardHorizontal";
 
 export default memo(CardHorizontal, areEqual);

@@ -1,9 +1,14 @@
+import { FC, MouseEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { getTownValueByLabel } from "@utils/helpers";
 import { sendGoogleEvent } from "@utils/analytics";
 
-const CulturalMessage = ({ location }) => {
+interface CulturalMessageProps {
+  location: string;
+}
+
+const CulturalMessage: FC<CulturalMessageProps> = ({ location }) => {
   const { push } = useRouter();
   const town = getTownValueByLabel(location);
 
@@ -11,7 +16,11 @@ const CulturalMessage = ({ location }) => {
     return null;
   }
 
-  const handleNavigation = async (e, town, timeframe) => {
+  const handleNavigation = async (
+    e: MouseEvent<HTMLAnchorElement>,
+    town: string,
+    timeframe: string
+  ) => {
     e.preventDefault();
     sendGoogleEvent("navigate_to", {
       content_type: "navigation",
@@ -20,7 +29,7 @@ const CulturalMessage = ({ location }) => {
       event_category: "Navigation",
       event_label: `navigate_to_${town}_${timeframe}`,
     });
-    await push(e.target.href);
+    await push(e.currentTarget.href);
   };
 
   return (

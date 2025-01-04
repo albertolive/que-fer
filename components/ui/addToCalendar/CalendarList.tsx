@@ -2,11 +2,30 @@ import { memo, useCallback, useEffect } from "react";
 import Image from "next/image";
 import { sendGoogleEvent } from "@utils/analytics";
 
-const CalendarList = ({ onClick, getUrls, title }) => {
+interface CalendarUrls {
+  google: string;
+  outlook: string;
+  ical: string;
+}
+
+interface CalendarOption {
+  name: string;
+  url?: string;
+  icon: string;
+  download?: string;
+}
+
+interface CalendarListProps {
+  onClick: () => void;
+  getUrls: () => CalendarUrls;
+  title: string;
+}
+
+const CalendarList: React.FC<CalendarListProps> = ({ onClick, getUrls, title }) => {
   const urls = getUrls();
 
   const handleCalendarClick = useCallback(
-    (calendarType) => {
+    (calendarType: string): void => {
       sendGoogleEvent("add_to_calendar", {
         event_category: "Calendar",
         event_label: calendarType,
@@ -17,7 +36,7 @@ const CalendarList = ({ onClick, getUrls, title }) => {
     [onClick, title]
   );
 
-  const calendarOptions = [
+  const calendarOptions: CalendarOption[] = [
     {
       name: "Google Calendar",
       url: urls?.google,
@@ -75,5 +94,7 @@ const CalendarList = ({ onClick, getUrls, title }) => {
     </div>
   );
 };
+
+CalendarList.displayName = "CalendarList";
 
 export default memo(CalendarList);

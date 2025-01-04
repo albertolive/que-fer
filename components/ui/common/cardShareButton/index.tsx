@@ -9,10 +9,22 @@ import {
   WhatsappIcon,
 } from "react-share";
 
-export default function CardShareButton({ slug }) {
+interface CardShareButtonProps {
+  slug: string;
+}
+
+interface CustomIconProps {
+  bgStyle?: React.CSSProperties;
+  iconFillColor?: string;
+  size?: number;
+  round?: boolean;
+  className?: string;
+}
+
+export default function CardShareButton({ slug }: CardShareButtonProps): JSX.Element {
   const eventUrl = `${siteUrl}/e/${slug}`;
 
-  const iconProps = {
+  const iconProps: CustomIconProps = {
     bgStyle: { fill: "#FFF" },
     iconFillColor: "#454545",
     size: 27,

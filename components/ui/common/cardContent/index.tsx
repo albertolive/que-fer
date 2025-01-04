@@ -1,4 +1,4 @@
-import { memo, useRef, useState, useCallback, useMemo } from "react";
+import { memo, useRef, useState, useCallback, useMemo, MouseEvent } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
@@ -14,6 +14,7 @@ import useOnScreen from "@components/hooks/useOnScreen";
 import Image from "@components/ui/common/image";
 import useCheckMobileScreen from "@components/hooks/useCheckMobileScreen";
 import ViewCounter from "@components/ui/viewCounter";
+import { CardContentProps, MemoizedValues } from "types/cardContent";
 
 const NativeShareButton = dynamic(
   () => import("@components/ui/common/nativeShareButton"),
@@ -26,42 +27,42 @@ const NativeShareButton = dynamic(
 const ShareButton = dynamic(
   () => import("@components/ui/common/cardShareButton"),
   {
-    loading: () => "",
+    loading: () => <div />,
     ssr: false,
   }
 );
 
-function CardContent({ event, isPriority, isHorizontal }) {
-  const counterRef = useRef();
-  const shareRef = useRef();
+function CardContent({ event, isPriority = false, isHorizontal = false }: CardContentProps): JSX.Element {
+  const counterRef = useRef<HTMLDivElement>(null);
+  const shareRef = useRef<HTMLDivElement>(null);
   const isCounterVisible = useOnScreen(counterRef, {
     freezeOnceVisible: true,
   });
   const { prefetch } = useRouter();
-  const [isCardLoading, setIsCardLoading] = useState(false);
+  const [isCardLoading, setIsCardLoading] = useState<boolean>(false);
   const isMobile = useCheckMobileScreen();
 
-  const handlePrefetch = useCallback(() => {
+  const handlePrefetch = useCallback((): void => {
     prefetch(`/e/${event.slug}`);
   }, [event.slug, prefetch]);
 
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback((): void => {
     setIsCardLoading(true);
   }, []);
 
-  const handleShareClick = useCallback((e) => {
+  const handleShareClick = useCallback((e: MouseEvent): void => {
     e.preventDefault();
     e.stopPropagation();
   }, []);
 
   const { description, icon } = event.weather || {};
 
-  const memoizedValues = useMemo(
+  const memoizedValues = useMemo<MemoizedValues>(
     () => ({
       title: truncateString(event.title || "", isHorizontal ? 30 : 75),
-      location: truncateString(event.location || ""),
+      location: truncateString(event.location || "", 45),
       subLocation: truncateString(event.subLocation || "", 45),
-      image: event.imageUploaded || event.eventImage,
+      image: event.imageUploaded || event.eventImage || "",
       eventDate: event.formattedEnd
         ? `Del ${event.formattedStart} al ${event.formattedEnd}`
         : `${event.nameDay}, ${event.formattedStart}`,
@@ -100,7 +101,7 @@ function CardContent({ event, isPriority, isHorizontal }) {
               {icon && (
                 <div className="flex items-center gap-1">
                   <NextImage
-                    alt={description}
+                    alt={description || "Weather icon"}
                     src={icon}
                     width="30"
                     height="30"
@@ -115,7 +116,6 @@ function CardContent({ event, isPriority, isHorizontal }) {
               {isMobile && (
                 <NativeShareButton
                   title={event.title}
-                  text={event.description}
                   url={`/e/${event.slug}`}
                   date={memoizedValues.eventDate}
                   location={memoizedValues.location}
@@ -139,9 +139,8 @@ function CardContent({ event, isPriority, isHorizontal }) {
                 title={event.title}
                 date={memoizedValues.eventDate}
                 location={event.location}
-                subLocation={event.subLocation}
+                subLocation={event.subLocation || ""}
                 image={memoizedValues.image}
-                alt={event.title}
                 priority={isPriority}
               />
             </div>

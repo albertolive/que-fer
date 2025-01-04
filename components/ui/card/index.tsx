@@ -1,6 +1,7 @@
 import { memo } from "react";
 import dynamic from "next/dynamic";
 import CardContent from "@components/ui/common/cardContent";
+import { Event } from "@store";
 
 const CardLoading = dynamic(() => import("@components/ui/cardLoading"), {
   loading: () => (
@@ -19,11 +20,17 @@ const AdCard = dynamic(() => import("@components/ui/adCard"), {
   ssr: false,
 });
 
-function Card({ event, isLoading, isPriority }) {
+interface CardProps {
+  event: Event;
+  isLoading?: boolean;
+  isPriority?: boolean;
+}
+
+function Card({ event, isLoading = false, isPriority = false }: CardProps): JSX.Element {
   if (isLoading) return <CardLoading />;
 
   if (event.isAd) {
-    return <AdCard event={event} />;
+    return <AdCard />;
   }
 
   return (
@@ -31,7 +38,7 @@ function Card({ event, isLoading, isPriority }) {
   );
 }
 
-function areEqual(prevProps, nextProps) {
+function areEqual(prevProps: CardProps, nextProps: CardProps): boolean {
   if (!prevProps.event && !nextProps.event) {
     return (
       prevProps.isLoading === nextProps.isLoading &&
