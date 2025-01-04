@@ -29,7 +29,8 @@
       "@utils/*": ["utils/*"],
       "@lib/*": ["lib/*"],
       "@config/*": ["config/*"],
-      "@public/*": ["public/*"]
+      "@public/*": ["public/*"],
+      "@types/*": ["types/*"]
     },
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,

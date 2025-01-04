@@ -1,3 +1,5 @@
+type DateString = string | Date;
+
 import {
   useState,
   useCallback,
@@ -6,16 +8,30 @@ import {
   memo,
   useRef,
   useEffect,
+  RefObject,
 } from "react";
 import CalendarButton from "./CalendarButton";
-import { generateCalendarUrls } from "@utils/calendarUtils";
+import { generateCalendarUrls, CalendarUrls } from "@utils/calendarUtils";
 
 const LazyCalendarList = lazy(() => import("./CalendarList"));
 
-const useOutsideClick = (ref, handler) => {
+interface AddToCalendarProps {
+  title: string;
+  description: string;
+  location: string;
+  startDate: DateString;
+  endDate: DateString;
+  canonical: string;
+  hideText?: boolean;
+}
+
+const useOutsideClick = (
+  ref: RefObject<HTMLDivElement>,
+  handler: () => void
+): void => {
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (ref.current && !ref.current.contains(event.target)) {
+    const handleClickOutside = (event: MouseEvent): void => {
+      if (ref.current && event.target instanceof Node && !ref.current.contains(event.target)) {
         handler();
       }
     };
@@ -27,7 +43,7 @@ const useOutsideClick = (ref, handler) => {
   }, [ref, handler]);
 };
 
-const AddToCalendar = ({
+const AddToCalendar: React.FC<AddToCalendarProps> = ({
   title,
   description,
   location,
@@ -36,15 +52,15 @@ const AddToCalendar = ({
   canonical,
   hideText = false,
 }) => {
-  const [showAgendaList, setShowAgendaList] = useState(false);
-  const containerRef = useRef(null);
+  const [showAgendaList, setShowAgendaList] = useState<boolean>(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const toggleAgendaList = useCallback(() => {
+  const toggleAgendaList = useCallback((): void => {
     setShowAgendaList((prev) => !prev);
   }, []);
 
   const calendarUrls = useCallback(
-    () =>
+    (): CalendarUrls =>
       generateCalendarUrls({
         title,
         description,
@@ -73,5 +89,7 @@ const AddToCalendar = ({
     </div>
   );
 };
+
+AddToCalendar.displayName = "AddToCalendar";
 
 export default memo(AddToCalendar);

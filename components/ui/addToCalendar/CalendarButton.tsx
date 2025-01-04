@@ -1,7 +1,12 @@
-import { memo } from "react";
+import { memo, MouseEventHandler } from "react";
 import { PlusIcon } from "@heroicons/react/outline";
 
-const CalendarButton = ({ onClick, hideText = false }) => (
+interface CalendarButtonProps {
+  onClick: MouseEventHandler<HTMLButtonElement>;
+  hideText?: boolean;
+}
+
+const CalendarButton: React.FC<CalendarButtonProps> = ({ onClick, hideText = false }) => (
   <button
     onClick={onClick}
     type="button"
