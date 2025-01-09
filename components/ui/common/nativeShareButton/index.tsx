@@ -1,7 +1,18 @@
-import React, { useCallback, useMemo, memo } from "react";
+import React, { useCallback, useMemo, memo, MouseEvent, JSX } from "react";
 import { ShareIcon } from "@heroicons/react/outline";
 import useCheckMobileScreen from "@components/hooks/useCheckMobileScreen";
 import { sendGoogleEvent } from "@utils/analytics";
+
+interface NativeShareButtonProps {
+  title: string;
+  url: string;
+  date: string;
+  location: string;
+  subLocation: string;
+  // eslint-disable-next-line no-unused-vars
+  onShareClick?: (e: MouseEvent<HTMLButtonElement>) => void;
+  hideText?: boolean;
+}
 
 const NativeShareButton = ({
   title,
@@ -11,7 +22,7 @@ const NativeShareButton = ({
   subLocation,
   onShareClick,
   hideText = false,
-}) => {
+}: NativeShareButtonProps): JSX.Element | null => {
   const isMobile = useCheckMobileScreen();
 
   const shareText = useMemo(
@@ -26,7 +37,7 @@ Lloc: ${location}, ${subLocation}
   );
 
   const handleNativeShare = useCallback(
-    async (e) => {
+    async (e: MouseEvent<HTMLButtonElement>) => {
       e.preventDefault();
       e.stopPropagation();
 
@@ -41,7 +52,10 @@ Lloc: ${location}, ${subLocation}
             text: shareText,
             url,
           });
-          sendGoogleEvent("share", { method: "native", content: title });
+          sendGoogleEvent("share", {
+            method: "native",
+            content: title,
+          });
         } catch (error) {
           console.error("Error sharing:", error);
           sendGoogleEvent("share_error", {
@@ -49,14 +63,12 @@ Lloc: ${location}, ${subLocation}
             error: error instanceof Error ? error.message : String(error),
           });
         }
-      } else {
-        console.log("Native sharing not supported on this browser");
       }
     },
-    [title, shareText, url, onShareClick]
+    [onShareClick, title, shareText, url]
   );
 
-  if (!isMobile) {
+  if (!isMobile || !navigator.share) {
     return null;
   }
 

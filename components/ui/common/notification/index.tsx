@@ -1,15 +1,29 @@
+import { FC } from "react";
+
 import CheckCircleIcon from "@heroicons/react/solid/CheckCircleIcon";
 import ExclamationCircleIcon from "@heroicons/react/solid/ExclamationCircleIcon";
 import XIcon from "@heroicons/react/solid/XIcon";
 
-export default function Notification({
+// eslint-disable-next-line no-unused-vars
+type HideNotification = (hide: boolean) => void;
+
+interface NotificationProps {
+  url?: string;
+  title?: string;
+  type?: "warning" | "success";
+  customNotification?: boolean;
+  hideNotification?: HideNotification;
+  hideClose?: boolean;
+}
+
+const Notification: FC<NotificationProps> = ({
   url,
   title,
   type,
   customNotification = true,
   hideNotification,
   hideClose = false,
-}) {
+}) => {
   if (customNotification) {
     return (
       <div className="rounded-md bg-green-50 p-4 mb-4 break-word">
@@ -37,8 +51,8 @@ export default function Notification({
         <div className="absolute top-0 right-0 pt-4 pr-4">
           <button
             type="button"
-            className=" rounded-md text-gray-400 hover:text-gray-500"
-            onClick={(hide) => hideNotification && hideNotification(hide)}
+            className="rounded-md text-gray-400 hover:text-gray-500"
+            onClick={() => hideNotification?.(true)}
           >
             <span className="sr-only">Close</span>
             <XIcon className="h-6 w-6" aria-hidden="true" />
@@ -72,4 +86,6 @@ export default function Notification({
       </div>
     </div>
   );
-}
+};
+
+export default Notification;

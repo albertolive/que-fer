@@ -13,7 +13,17 @@ const ImgDefault = dynamic(() => import("@components/ui/imgDefault"), {
   ),
 });
 
-const cloudflareLoader = ({ src, width, quality = 70 }) => {
+interface LoaderProps {
+  src: string;
+  width: number;
+  quality?: number;
+}
+
+const cloudflareLoader = ({
+  src,
+  width,
+  quality = 70,
+}: LoaderProps): string => {
   return src;
   // if (!src) return "";
   // const normalizedSrc = src.startsWith("/") ? src.slice(1) : src;
@@ -25,16 +35,26 @@ const cloudflareLoader = ({ src, width, quality = 70 }) => {
   //   : src;
 };
 
+interface ImageComponentProps {
+  title: string;
+  date?: string;
+  location?: string;
+  subLocation?: string;
+  image?: string;
+  className?: string;
+  priority?: boolean;
+}
+
 function ImageComponent({
-  title,
-  date,
-  location,
-  subLocation,
+  title = "",
+  date = "",
+  location = "",
+  subLocation = "",
   image,
   className = "w-full h-full flex justify-center items-center",
   priority = false,
-}) {
-  const imgDefaultRef = useRef();
+}: ImageComponentProps) {
+  const imgDefaultRef = useRef<HTMLDivElement>(null);
   const isImgDefaultVisible = useOnScreen(imgDefaultRef, {
     freezeOnceVisible: true,
   });
@@ -47,11 +67,9 @@ function ImageComponent({
       <div className={imageClassName} ref={imgDefaultRef}>
         {isImgDefaultVisible ? (
           <ImgDefault
-            title={title}
             date={date}
             location={location}
             subLocation={subLocation}
-            alt={title}
           />
         ) : (
           <div className="flex justify-center items-center w-full">
@@ -66,7 +84,9 @@ function ImageComponent({
     <div className={imageClassName} style={{ position: "relative" }}>
       <NextImage
         className="object-cover"
-        loader={({ src, width }) => cloudflareLoader({ src, width, quality })}
+        loader={({ src, width }: LoaderProps) =>
+          cloudflareLoader({ src, width, quality })
+        }
         src={image}
         alt={title}
         width={500}
@@ -79,11 +99,6 @@ function ImageComponent({
         }}
         priority={priority}
         sizes="(max-width: 480px) 100vw, (max-width: 768px) 50vw, 25vw"
-        srcSet={`
-          ${cloudflareLoader({ src: image, width: 480 })} 480w,
-          ${cloudflareLoader({ src: image, width: 768 })} 768w,
-          ${cloudflareLoader({ src: image, width: 1200 })} 1200w
-        `}
         unoptimized={env === "dev"}
       />
     </div>

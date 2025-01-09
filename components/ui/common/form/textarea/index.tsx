@@ -1,8 +1,19 @@
 import { Editor } from "@tinymce/tinymce-react";
+import { ChangeEvent } from "react";
 
-export default function TextArea({ id, value = "", onChange }) {
-  const handleEditorChange = (content) => {
-    onChange({ target: { name: id, value: content } });
+interface TextAreaProps {
+  id: string;
+  value: string;
+  // eslint-disable-next-line no-unused-vars
+  onChange: (e: ChangeEvent<{ name: string; value: string }>) => void;
+}
+
+export default function TextArea({ id, value, onChange }: TextAreaProps) {
+  const handleEditorChange = (content: string) => {
+    onChange({ target: { name: id, value: content } } as ChangeEvent<{
+      name: string;
+      value: string;
+    }>);
   };
 
   return (

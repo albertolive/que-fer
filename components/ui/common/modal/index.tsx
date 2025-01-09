@@ -1,6 +1,16 @@
-import { Fragment, useRef } from "react";
+import { Fragment, useRef, ReactNode } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import ArrowLeftIcon from "@heroicons/react/outline/ArrowLeftIcon";
+
+interface ModalProps {
+  open: boolean;
+  // eslint-disable-next-line no-unused-vars
+  setOpen: (open: boolean) => void;
+  title: string;
+  children: ReactNode;
+  actionButton?: string;
+  onActionButtonClick?: () => void | Promise<void>;
+}
 
 export default function Modal({
   open,
@@ -9,8 +19,8 @@ export default function Modal({
   children,
   actionButton,
   onActionButtonClick,
-}) {
-  const cancelButtonRef = useRef(null);
+}: ModalProps) {
+  const cancelButtonRef = useRef<HTMLButtonElement>(null);
 
   return (
     <Dialog
@@ -64,10 +74,8 @@ export default function Modal({
                           onClick={() => {
                             if (onActionButtonClick) {
                               onActionButtonClick();
-                              setOpen(false);
-                            } else {
-                              setOpen(false);
                             }
+                            setOpen(false);
                           }}
                           className="flex justify-center items-center gap-2 text-blackCorp bg-whiteCorp rounded-xl py-2 px-3 ease-in-out duration-300 border border-blackCorp font-barlow uppercase font-semibold tracking-wide focus:outline-none hover:bg-primary hover:border-whiteCorp hover:text-whiteCorp"
                         >

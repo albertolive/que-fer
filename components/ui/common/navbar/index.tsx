@@ -12,7 +12,15 @@ import Image from "next/image";
 import ActiveLink from "@components/ui/common/link";
 import logo from "@public/static/images/logo-esdeveniments.webp";
 
-const navigation = [
+type Href = `/${string}`;
+
+interface NavigationItem {
+  name: string;
+  href: Href;
+  current: true | false;
+}
+
+const navigation: NavigationItem[] = [
   { name: "Agenda", href: "/", current: true },
   { name: "Publicar", href: "/publica", current: false },
   { name: "Qui som", href: "/qui-som", current: false },
@@ -63,12 +71,10 @@ export default function Navbar() {
                 <div className="md:w-1/2 flex justify-end items-center">
                   <div className="hidden md:flex md:items-center gap-x-4">
                     {navigation.map((item) => (
-                      <ActiveLink
-                        href={item.href}
-                        key={item.name}
-                        className="border-b-2 border-b-whiteCorp"
-                      >
-                        <a>{item.name}</a>
+                      <ActiveLink href={item.href} key={item.name}>
+                        <a className="border-b-2 border-b-whiteCorp">
+                          {item.name}
+                        </a>
                       </ActiveLink>
                     ))}
                   </div>
@@ -122,12 +128,8 @@ export default function Navbar() {
           <Disclosure.Panel className="md:hidden">
             <div className="w-full relative flex justify-evenly items-center bg-whiteCorp transition-transform">
               {navigation.map((item) => (
-                <ActiveLink
-                  href={item.href}
-                  key={item.name}
-                  className="border-b-2 border-b-whiteCorp"
-                >
-                  <a>{item.name}</a>
+                <ActiveLink href={item.href} key={item.name}>
+                  <a className="border-b-2 border-b-whiteCorp">{item.name}</a>
                 </ActiveLink>
               ))}
             </div>
