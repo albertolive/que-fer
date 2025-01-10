@@ -1,7 +1,14 @@
-import { memo } from "react";
+import { memo, FC } from "react";
 import CardHorizontal from "@components/ui/cardHorizontal";
+import { Event } from "@store";
 
-function EventCardLoading() {
+interface EventsHorizontalScrollProps {
+  events: Event[];
+  loading?: boolean;
+  usePriority?: boolean;
+}
+
+const EventCardLoading: FC = () => {
   return (
     <div className="flex-none w-96 min-w-[24rem] flex flex-col bg-whiteCorp overflow-hidden cursor-pointer">
       {/* Image Placeholder */}
@@ -23,9 +30,13 @@ function EventCardLoading() {
       </div>
     </div>
   );
-}
+};
 
-function EventsHorizontalScroll({ events, loading, usePriority }) {
+const EventsHorizontalScroll: FC<EventsHorizontalScrollProps> = ({
+  events,
+  loading,
+  usePriority,
+}) => {
   if (loading) {
     return (
       <div className="w-full flex overflow-x-auto py-4 space-x-4">
@@ -51,6 +62,9 @@ function EventsHorizontalScroll({ events, loading, usePriority }) {
       ))}
     </div>
   );
-}
+};
+
+EventsHorizontalScroll.displayName = "EventsHorizontalScroll";
+EventCardLoading.displayName = "EventCardLoading";
 
 export default memo(EventsHorizontalScroll);

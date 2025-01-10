@@ -43,6 +43,7 @@ interface ImageComponentProps {
   image?: string;
   className?: string;
   priority?: boolean;
+  alt?: string;
 }
 
 function ImageComponent({
@@ -53,6 +54,7 @@ function ImageComponent({
   image,
   className = "w-full h-full flex justify-center items-center",
   priority = false,
+  alt = title,
 }: ImageComponentProps) {
   const imgDefaultRef = useRef<HTMLDivElement>(null);
   const isImgDefaultVisible = useOnScreen(imgDefaultRef, {
@@ -88,7 +90,7 @@ function ImageComponent({
           cloudflareLoader({ src, width, quality })
         }
         src={image}
-        alt={title}
+        alt={alt}
         width={500}
         height={260}
         loading={priority ? "eager" : "lazy"}

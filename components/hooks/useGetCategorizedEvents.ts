@@ -1,16 +1,9 @@
 import { captureException } from "@sentry/nextjs";
-import useSWR, { preload } from "swr";
+import useSWR, { preload, BareFetcher } from "swr";
+import { Event as StoreEvent, EventCategory } from "@store";
 
-interface Event {
-  id: string;
-  title: string;
-  description: string;
-  startDate: string;
-  endDate?: string;
-  location: string;
-  url: string;
-  imageUrl?: string;
-  isAd?: boolean;
+interface Event extends Omit<StoreEvent, 'distance' | 'weather'> {
+  category: EventCategory;
 }
 
 interface GetCategorizedEventsProps {
@@ -21,15 +14,19 @@ interface GetCategorizedEventsProps {
 }
 
 interface GetCategorizedEventsResponse {
-  events: Event[];
-  error?: any;
+  categorizedEvents: Record<string, Event[]>;
+  latestEvents: Event[];
+  currentYear: number;
+  noEventsFound: boolean;
 }
 
-const fetcher = async ([url, searchTerms, maxResults]: [string, string[], number]): Promise<GetCategorizedEventsResponse> => {
+const fetcher: BareFetcher<GetCategorizedEventsResponse> = async (args: readonly [string, string[], number]) => {
+  const [url, searchTerms, maxResults] = args;
   const response = await fetch(
     `${url}?searchTerms=${searchTerms.join(",")}&maxResults=${maxResults}`
   );
-  return response.json();
+  const data = await response.json();
+  return data as GetCategorizedEventsResponse;
 };
 
 export const useGetCategorizedEvents = ({
@@ -44,7 +41,12 @@ export const useGetCategorizedEvents = ({
     ["/api/getCategorizedEvents", searchTerms, maxResults],
     fetcher,
     {
-      fallbackData: props,
+      fallbackData: {
+        categorizedEvents: props.categorizedEvents || {},
+        latestEvents: props.latestEvents || [],
+        currentYear: new Date().getFullYear(),
+        noEventsFound: false,
+      },
       refreshInterval: refreshInterval ? 300000 : 0,
       revalidateOnFocus: true,
       revalidateOnReconnect: true,

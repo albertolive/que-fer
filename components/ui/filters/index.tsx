@@ -1,4 +1,5 @@
-import { memo, useCallback } from "react";
+import { memo, useCallback, MouseEvent } from "react";
+import { DateOption } from "@utils/constants";
 import XIcon from "@heroicons/react/solid/XIcon";
 import ChevronDownIcon from "@heroicons/react/solid/ChevronDownIcon";
 import AdjustmentsIcon from "@heroicons/react/outline/AdjustmentsIcon";
@@ -7,13 +8,33 @@ import { getPlaceLabel, findCategoryKeyByValue } from "@utils/helpers";
 import { useRouter } from "next/router";
 import useStore from "@store";
 
+interface RenderButtonProps {
+  text: string;
+  enabled: string | boolean | undefined;
+  onClick: () => void;
+  handleOpenModal: () => void;
+  scrollToTop: () => void;
+}
+
+interface FilterState {
+  place: string;
+  byDate: string;
+  category: string;
+  distance: string;
+  openModal: boolean;
+  setState: (
+    key: "place" | "byDate" | "category" | "distance" | "openModal",
+    value: string | boolean
+  ) => void;
+}
+
 const renderButton = ({
   text,
   enabled,
   onClick,
   handleOpenModal,
   scrollToTop,
-}) => (
+}: RenderButtonProps): JSX.Element => (
   <div
     key={text}
     className="w-full bg-whiteCorp flex justify-center items-center nowrap"
@@ -35,7 +56,8 @@ const renderButton = ({
         <XIcon
           className="h-5 w-5"
           aria-hidden="true"
-          onClick={() => {
+          onClick={(e: MouseEvent) => {
+            e.stopPropagation();
             onClick();
             scrollToTop();
           }}
@@ -44,32 +66,37 @@ const renderButton = ({
         <ChevronDownIcon
           className="h-5 w-5"
           aria-hidden="true"
-          onClick={onClick}
+          onClick={(e: MouseEvent) => {
+            e.stopPropagation();
+            onClick();
+          }}
         />
       )}
     </div>
   </div>
 );
 
-const Filters = () => {
+const Filters = (): JSX.Element => {
   const router = useRouter();
-  const { place, byDate, category, distance, openModal, setState } = useStore(
-    (state) => ({
+  const { place, byDate, category, distance, openModal, setState } =
+    useStore<FilterState>((state) => ({
       place: state.place,
       byDate: state.byDate,
       category: state.category,
       distance: state.distance,
       openModal: state.openModal,
       setState: state.setState,
-    })
-  );
+    }));
 
-  const isAnyFilterSelected = () => place || byDate || category || distance;
-  const getText = (value, defaultValue) => (value ? value : defaultValue);
+  const isAnyFilterSelected = (): boolean =>
+    Boolean(place || byDate || category || distance);
+  const getText = (value: string | undefined, defaultValue: string): string =>
+    value ? value : defaultValue;
   const foundByDate = BYDATES.find((item) => item.value === byDate);
-  const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
+  const scrollToTop = (): void =>
+    window.scrollTo({ top: 0, behavior: "smooth" });
 
-  const handleByDateClick = useCallback(() => {
+  const handleByDateClick = useCallback((): void => {
     if (byDate) {
       setState("byDate", "");
     } else {
@@ -77,25 +104,31 @@ const Filters = () => {
     }
   }, [byDate, setState]);
 
-  const handleCategoryClick = useCallback(() => {
+  const handleCategoryClick = useCallback((): void => {
     setState("category", "");
   }, [setState]);
 
-  const handleDistanceClick = useCallback(() => {
+  const handleDistanceClick = useCallback((): void => {
     setState("distance", "");
   }, [setState]);
 
   const handleOnClick = useCallback(
-    (value, fn) => () => value ? fn() : setState("openModal", true),
+    (value: string | DateOption | undefined, fn: () => void) => (): void => {
+      if (value) {
+        fn();
+      } else {
+        setState("openModal", true);
+      }
+    },
     [setState]
   );
 
-  const handlePlaceClick = useCallback(() => {
+  const handlePlaceClick = useCallback((): void => {
     if (place) {
       setState("place", "");
 
       if (place) {
-        router.push(`/`);
+        router.push("/");
       }
     } else {
       setState("openModal", true);
@@ -111,7 +144,6 @@ const Filters = () => {
       <div className="w-full h-10 flex justify-start items-center cursor-pointer">
         <div
           onClick={() => setState("openModal", true)}
-          type="button"
           className="mr-3 flex justify-center items-center gap-3 cursor-pointer"
         >
           <AdjustmentsIcon
@@ -129,7 +161,7 @@ const Filters = () => {
         <div className="w-8/10 flex items-center gap-1 border-0 placeholder:text-bColor overflow-x-auto">
           {renderButton({
             text: getText(getPlaceLabel(place), "Població"),
-            enabled: place,
+            enabled: Boolean(place),
             onClick: handlePlaceClick,
             handleOpenModal: () => setState("openModal", true),
             scrollToTop,
@@ -139,21 +171,21 @@ const Filters = () => {
               category ? findCategoryKeyByValue(category) : category,
               "Categoria"
             ),
-            enabled: category,
+            enabled: Boolean(category),
             onClick: handleOnClick(category, handleCategoryClick),
             handleOpenModal: () => setState("openModal", true),
             scrollToTop,
           })}
           {renderButton({
             text: getText(foundByDate?.label, "Data"),
-            enabled: foundByDate,
+            enabled: Boolean(foundByDate),
             onClick: handleOnClick(foundByDate, handleByDateClick),
             handleOpenModal: () => setState("openModal", true),
             scrollToTop,
           })}
           {renderButton({
-            text: getText(distance ? `${distance} km` : null, "Distància"),
-            enabled: distance,
+            text: getText(distance ? `${distance} km` : undefined, "Distància"),
+            enabled: Boolean(distance),
             onClick: handleOnClick(distance, handleDistanceClick),
             handleOpenModal: () => setState("openModal", true),
             scrollToTop,

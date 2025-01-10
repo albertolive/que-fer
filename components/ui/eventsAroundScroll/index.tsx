@@ -1,11 +1,12 @@
-import { memo } from "react";
+import { memo, FC, MouseEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import Image from "@components/ui/common/image";
 import { truncateString } from "@utils/helpers";
 import { sendGoogleEvent } from "@utils/analytics";
+import { Event } from "@store";
 
-function EventCardLoading() {
+const EventCardLoading: FC = () => {
   return (
     <div className="flex-none w-40 min-w-[10rem] flex flex-col bg-whiteCorp overflow-hidden cursor-pointer mb-10">
       {/* Image Placeholder */}
@@ -27,12 +28,25 @@ function EventCardLoading() {
       </div>
     </div>
   );
+};
+
+interface EventsAroundScrollProps {
+  events: Event[];
+  loading: boolean;
 }
 
-function EventsAroundScroll({ events, loading }) {
+const EventsAroundScroll: FC<EventsAroundScrollProps> = ({
+  events,
+  loading,
+}) => {
   const { push } = useRouter();
 
-  const sendEventClickGA = async (e, link, eventId, eventTitle) => {
+  const sendEventClickGA = async (
+    e: MouseEvent<HTMLAnchorElement>,
+    link: string,
+    eventId: string,
+    eventTitle: string
+  ): Promise<void> => {
     e.preventDefault();
     sendGoogleEvent("select_content", {
       content_type: "event",
@@ -75,15 +89,14 @@ function EventsAroundScroll({ events, loading }) {
                 <Image
                   className="w-full object-cover"
                   title={event.title}
-                  image={image}
                   alt={event.title}
-                  layout="fill"
+                  image={image}
                 />
               </div>
               {/* Title */}
               <div className="flex pt-2">
                 <div className="pt-[2px] pr-2">
-                  <div className=" w-2 h-4 bg-gradient-to-r from-primary to-primarydark"></div>
+                  <div className="w-2 h-4 bg-gradient-to-r from-primary to-primarydark"></div>
                 </div>
                 <h3 className="text-sm font-semibold text-ellipsis overflow-hidden whitespace-nowrap">
                   {title}
@@ -92,7 +105,7 @@ function EventsAroundScroll({ events, loading }) {
               {/* Location */}
               <div className="pt-1">
                 <div className="text-xs font-normal text-ellipsis overflow-hidden whitespace-nowrap">
-                  <span>{event.location}</span>
+                  <span>{event.location || ""}</span>
                 </div>
               </div>
             </Link>
@@ -101,6 +114,8 @@ function EventsAroundScroll({ events, loading }) {
       })}
     </div>
   );
-}
+};
+
+EventsAroundScroll.displayName = "EventsAroundScroll";
 
 export default memo(EventsAroundScroll);
