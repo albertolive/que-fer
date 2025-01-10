@@ -1,15 +1,24 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, FC } from "react";
 import { captureException } from "@sentry/nextjs";
 import { sendGoogleEvent } from "@utils/analytics";
 import EventsAroundScroll from "@components/ui/eventsAroundScroll";
 
-const EventsAround = ({ id, title, town, region }) => {
-  const [events, setEvents] = useState([]);
+import { Event } from "@store";
+
+interface EventsAroundProps {
+  id: string;
+  title: string;
+  town: string;
+  region: string;
+}
+
+const EventsAround: FC<EventsAroundProps> = ({ id, title, town, region }) => {
+  const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    sendGoogleEvent("view_events_around_component");
+    sendGoogleEvent("view_events_around_component", {});
 
     const fetchEvents = async () => {
       try {
@@ -26,7 +35,7 @@ const EventsAround = ({ id, title, town, region }) => {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
-        sendGoogleEvent("view_events_around_data");
+        sendGoogleEvent("view_events_around_data", {});
         if (data.error) {
           // Handle case where API explicitly returns an error
           throw new Error(data.error);

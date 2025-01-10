@@ -1,4 +1,4 @@
-import { memo, useEffect, useState, useCallback } from "react";
+import { memo, useEffect, useState, useCallback, FC } from "react";
 import NextImage from "next/image";
 import dynamic from "next/dynamic";
 import useStore from "@store";
@@ -7,6 +7,7 @@ import Search from "@components/ui/search";
 import SubMenu from "@components/ui/common/subMenu";
 import Imago from "public/static/images/imago-esdeveniments.png";
 import CardLoading from "@components/ui/cardLoading";
+import { Event } from "@store";
 
 const EventsList = dynamic(() => import("@components/ui/eventsList"), {
   loading: () => (
@@ -29,15 +30,26 @@ const EventsCategorized = dynamic(
   }
 );
 
-function debounce(func, wait) {
-  let timeout;
-  return function (...args) {
+/* eslint-disable no-unused-vars */
+function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): (...args: Parameters<T>) => void {
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+
+  return function (this: ThisParameterType<T>, ...args: Parameters<T>): void {
     clearTimeout(timeout);
     timeout = setTimeout(() => func.apply(this, args), wait);
   };
 }
+/* eslint-enable no-unused-vars */
 
-function Events({ events, hasServerFilters }) {
+interface EventsProps {
+  events: Event[];
+  hasServerFilters: boolean;
+}
+
+const Events: FC<EventsProps> = ({ events, hasServerFilters }) => {
   const { setState, areFiltersActive, filtersApplied } = useStore((state) => ({
     openModal: state.openModal,
     setState: state.setState,
@@ -72,15 +84,17 @@ function Events({ events, hasServerFilters }) {
   }, [isBrowser, filtersApplied, scrollToTop, resetPage, setState]);
 
   useEffect(() => {
-    if (isBrowser) {
-      const handleScroll = debounce(() => {
-        setScrollIcon(window.scrollY > 400);
-      }, 200);
-
-      handleScroll();
-      window.addEventListener("scroll", handleScroll);
-      return () => window.removeEventListener("scroll", handleScroll);
+    if (!isBrowser) {
+      return;
     }
+
+    const handleScroll = debounce(() => {
+      setScrollIcon(window.scrollY > 400);
+    }, 200);
+
+    handleScroll();
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, [isBrowser, setState]);
 
   useEffect(() => {
@@ -111,8 +125,8 @@ function Events({ events, hasServerFilters }) {
         <NextImage
           src={Imago}
           className="p-1"
-          width="28"
-          height="28"
+          width={28}
+          height={28}
           alt="Esdeveniments.cat"
         />
       </div>
@@ -141,6 +155,6 @@ function Events({ events, hasServerFilters }) {
       )}
     </>
   );
-}
+};
 
 export default memo(Events);

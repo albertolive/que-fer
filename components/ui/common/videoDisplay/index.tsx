@@ -1,5 +1,11 @@
-const VideoDisplay = ({ videoUrl }) => {
-  if (!videoUrl) {
+import { JSX } from "react";
+
+interface VideoDisplayProps {
+  videoUrl: string | null | undefined;
+}
+
+const VideoDisplay = ({ videoUrl }: VideoDisplayProps): JSX.Element | null => {
+  if (!videoUrl || videoUrl === "") {
     return null;
   }
 

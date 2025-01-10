@@ -1,8 +1,26 @@
+import { FC } from "react";
 import Link from "next/link";
 import Modal from "@components/ui/common/modal";
 import { PencilIcon, XCircleIcon } from "@heroicons/react/outline";
 
-export default function EditModal({
+type DeleteReason = "not-exist" | "duplicated" | "offensive" | "others";
+
+interface EditModalProps {
+  openModal: boolean;
+  // eslint-disable-next-line no-unused-vars
+  setOpenModal: (open: boolean) => void;
+  slug: string;
+  // eslint-disable-next-line no-unused-vars
+  setOpenModalDeleteReasonModal: (open: boolean) => void;
+  openDeleteReasonModal: boolean;
+  // eslint-disable-next-line no-unused-vars
+  setReasonToDelete: (reason: DeleteReason) => void;
+  reasonToDelete?: DeleteReason;
+  onSendDeleteReason: () => void;
+  onRemove: () => void;
+}
+
+const EditModal: FC<EditModalProps> = ({
   openModal,
   setOpenModal,
   slug,
@@ -12,7 +30,7 @@ export default function EditModal({
   reasonToDelete,
   onSendDeleteReason,
   onRemove,
-}) {
+}) => {
   return (
     <>
       <Modal
@@ -40,7 +58,7 @@ export default function EditModal({
             </Link>
           </li>
           <li key="remove" className="p-4 flex">
-            <div className="cursor-pointer" as="button" onClick={onRemove}>
+            <button className="cursor-pointer" onClick={onRemove}>
               <div className="flex justify-center items-start gap-4">
                 <XCircleIcon
                   className="h-6 w-6 text-primary"
@@ -53,7 +71,7 @@ export default function EditModal({
                   </p>
                 </div>
               </div>
-            </div>
+            </button>
           </li>
         </ul>
       </Modal>
@@ -153,7 +171,11 @@ export default function EditModal({
           <div className="flex justify-center py-4">
             <button
               disabled={!reasonToDelete}
-              onClick={onSendDeleteReason}
+              onClick={() => {
+                if (reasonToDelete) {
+                  onSendDeleteReason();
+                }
+              }}
               className="disabled:opacity-50 disabled:cursor-default disabled:hover:bg-primary text-whiteCorp bg-primary rounded-xl py-3 px-6 ease-in-out duration-300 border border-whiteCorp focus:outline-none font-barlow italic uppercase font-semibold tracking-wide"
             >
               Enviar
@@ -163,4 +185,6 @@ export default function EditModal({
       </Modal>
     </>
   );
-}
+};
+
+export default EditModal;
