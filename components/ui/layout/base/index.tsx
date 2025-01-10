@@ -1,3 +1,4 @@
+import { ReactNode } from "react";
 import dynamic from "next/dynamic";
 import Head from "next/head";
 
@@ -6,11 +7,15 @@ const Navbar = dynamic(() => import("@components/ui/common/navbar"), {
 });
 
 const Footer = dynamic(() => import("@components/ui/common/footer"), {
-  loading: () => "",
+  loading: () => <></>,
   ssr: false,
 });
 
-export default function BaseLayout({ children }) {
+interface BaseLayoutProps {
+  children: ReactNode;
+}
+
+export default function BaseLayout({ children }: BaseLayoutProps): JSX.Element {
   return (
     <>
       <Head>

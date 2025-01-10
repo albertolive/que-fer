@@ -1,14 +1,26 @@
 import { MONTHS_URL as MONTHS } from "@utils/constants";
 import { nextDay, isWeekend } from "@utils/helpers";
 
-export const getDaylightSaving = () => {
+type DateRange = {
+  from: Date;
+  until: Date;
+};
+
+/**
+ * Returns whether the current date is in daylight saving time
+ * @returns {number} 2 if in daylight saving time, 1 if not
+ */
+export const getDaylightSaving = (): number => {
   const date = new Date();
   const jan = new Date(date.getFullYear(), 0, 1).getTimezoneOffset();
   const jul = new Date(date.getFullYear(), 6, 1).getTimezoneOffset();
   return Math.max(jan, jul) != date.getTimezoneOffset() ? 2 : 1;
 };
 
-export const today = () => {
+/**
+ * Returns date range for today
+ */
+export const today = (): DateRange => {
   const from = new Date();
   const until = new Date();
 
@@ -19,7 +31,10 @@ export const today = () => {
   return { from, until };
 };
 
-export const tomorrow = () => {
+/**
+ * Returns date range for tomorrow
+ */
+export const tomorrow = (): DateRange => {
   const from = new Date();
   from.setDate(from.getDate() + 1); // set the date to tomorrow
   const until = new Date(from.getTime()); // copy the date object
@@ -31,7 +46,10 @@ export const tomorrow = () => {
   return { from, until };
 };
 
-export const week = () => {
+/**
+ * Returns date range for the current week
+ */
+export const week = (): DateRange => {
   const from = new Date();
   const until = nextDay(0);
 
@@ -42,7 +60,10 @@ export const week = () => {
   return { from, until };
 };
 
-export const weekend = () => {
+/**
+ * Returns date range for the weekend
+ */
+export const weekend = (): DateRange => {
   let from = nextDay(5);
 
   if (isWeekend()) {
@@ -62,7 +83,10 @@ export const weekend = () => {
   return { from, until };
 };
 
-export const twoWeeksDefault = () => {
+/**
+ * Returns date range for the next two weeks
+ */
+export const twoWeeksDefault = (): DateRange => {
   const now = new Date();
   const from = new Date();
   const until = new Date(now.setDate(now.getDate() + 14));
@@ -70,8 +94,16 @@ export const twoWeeksDefault = () => {
   return { from, until };
 };
 
-export const getHistoricDates = (month, year) => {
+/**
+ * Returns date range for a specific month and year
+ * @param {string} month - Month name in Catalan
+ * @param {number} year - Year
+ */
+export const getHistoricDates = (month: string, year: number): DateRange => {
   const getMonth = MONTHS.indexOf(month);
+  if (getMonth === -1) {
+    throw new Error(`Invalid month: ${month}`);
+  }
 
   const from = new Date(year, getMonth, 1, 2, 0, 0);
   const until = new Date(year, getMonth + 1, 0, 24, 59, 59);
@@ -79,7 +111,11 @@ export const getHistoricDates = (month, year) => {
   return { from, until };
 };
 
-export const getAllYears = () => {
+/**
+ * Returns an array of years from 2023 to current year
+ * @returns {number[]} Array of years
+ */
+export const getAllYears = (): number[] => {
   const currentYear = new Date().getFullYear();
 
   return Array.from(

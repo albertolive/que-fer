@@ -1,4 +1,23 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, CSSProperties } from "react";
+
+declare global {
+  interface Window {
+    adsbygoogle: any[];
+  }
+}
+
+type AdStatus = "unfilled" | "filled";
+
+interface GoogleAdsenseContainerProps {
+  id: string;
+  style?: React.CSSProperties;
+  layout?: "horizontal" | "vertical" | "in-article" | "in-feed";
+  format?: "auto" | "rectangle" | "vertical" | "horizontal";
+  responsive?: boolean;
+  slot: string;
+  setDisplayAd?: (display: boolean) => void;
+  adClient?: string;
+}
 
 const GoogleAdsenseContainer = ({
   id,
@@ -8,9 +27,10 @@ const GoogleAdsenseContainer = ({
   responsive,
   slot,
   setDisplayAd,
-}) => {
-  const adRef = useRef(null);
-  const observer = useRef(null);
+  adClient,
+}: GoogleAdsenseContainerProps): JSX.Element => {
+  const adRef = useRef<HTMLModElement>(null);
+  const observer = useRef<MutationObserver | null>(null);
 
   useEffect(() => {
     if (
@@ -24,15 +44,20 @@ const GoogleAdsenseContainer = ({
     try {
       (window.adsbygoogle = window.adsbygoogle || []).push({});
     } catch (err) {
-      console.log("adsense error", err);
+      console.error(
+        "adsense error",
+        err instanceof Error ? err.message : String(err)
+      );
     }
   }, []);
 
   useEffect(() => {
-    const callback = (mutationsList) => {
+    const callback = (mutationsList: MutationRecord[]): void => {
       mutationsList.forEach((element) => {
-        if (element.target.attributes["data-ad-status"].value === "unfilled") {
-          setDisplayAd && setDisplayAd(false);
+        const target = element.target as HTMLElement;
+        const adStatus = target.getAttribute("data-ad-status") as AdStatus;
+        if (adStatus === "unfilled") {
+          setDisplayAd?.(false);
         }
       });
     };
@@ -48,7 +73,7 @@ const GoogleAdsenseContainer = ({
       });
     }
 
-    return () => observer.current.disconnect();
+    return () => observer.current?.disconnect();
   }, [setDisplayAd, style, layout, format, responsive, slot]);
 
   return (
@@ -56,13 +81,20 @@ const GoogleAdsenseContainer = ({
       id={id}
       ref={adRef}
       className="adsbygoogle w-full"
-      style={{ display: "block", position: "relative", zIndex: 0, ...style }}
-      data-ad-client={process.env.NEXT_PUBLIC_GOOGLE_ADS}
+      style={
+        {
+          display: "block",
+          position: "relative",
+          zIndex: 0,
+          ...style,
+        } as CSSProperties
+      }
+      data-ad-client={adClient || process.env.NEXT_PUBLIC_GOOGLE_ADS}
       data-ad-slot={slot}
       data-ad-format={format}
       data-full-width-responsive={responsive}
       data-ad-layout={layout}
-    ></ins>
+    />
   );
 };
 

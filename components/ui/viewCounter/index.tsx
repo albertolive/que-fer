@@ -2,12 +2,21 @@ import { useEffect, useState } from "react";
 import ChartBarIcon from "@heroicons/react/outline/ChartBarIcon";
 import { env } from "@utils/helpers";
 
-const ViewCounter = ({ slug, hideText }) => {
-  const [views, setViews] = useState(0);
-  const [loading, setLoading] = useState(true);
+interface ViewCounterProps {
+  slug: string;
+  hideText?: boolean;
+}
+
+interface ViewCounterResponse {
+  views: number;
+}
+
+function ViewCounter({ slug, hideText = false }: ViewCounterProps) {
+  const [views, setViews] = useState<number>(0);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    const fetchViews = async () => {
+    const fetchViews = async (): Promise<void> => {
       if (env === "dev") {
         setLoading(false);
       } else {
@@ -22,7 +31,7 @@ const ViewCounter = ({ slug, hideText }) => {
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
           }
-          const data = await response.json();
+          const data: ViewCounterResponse = await response.json();
           setViews(data.views || 0);
         } catch (error) {
           const errorMessage = `Failed to fetch views for slug "${slug}": ${error}`;
@@ -37,7 +46,7 @@ const ViewCounter = ({ slug, hideText }) => {
   }, [slug]);
 
   return (
-    <div className=" w-full flex justify-end items-center gap-2 text-md">
+    <div className="w-full flex justify-end items-center gap-2 text-md">
       <ChartBarIcon className="w-6 h-6" />
       {loading ? (
         <div className="flex">
@@ -51,6 +60,6 @@ const ViewCounter = ({ slug, hideText }) => {
       )}
     </div>
   );
-};
+}
 
 export default ViewCounter;

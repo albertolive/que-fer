@@ -1,20 +1,42 @@
-import { useMemo, useState, useCallback, useEffect, memo } from "react";
+import {
+  useMemo,
+  useState,
+  useCallback,
+  useEffect,
+  memo,
+  ChangeEvent,
+} from "react";
 import dynamic from "next/dynamic";
 import RadioInput from "@components/ui/common/form/radioInput";
 import RangeInput from "@components/ui/common/form/rangeInput";
 import { BYDATES, CATEGORY_NAMES_MAP, DISTANCES } from "@utils/constants";
 import { generateRegionsAndTownsOptions, sendEventToGA } from "@utils/helpers";
-import useStore from "@store";
+import useStore, { UserLocation, EventCategory } from "@store";
 
 const Modal = dynamic(() => import("@components/ui/common/modal"), {
-  loading: () => "",
+  loading: () => <></>,
 });
 
 const Select = dynamic(() => import("@components/ui/common/form/select"), {
-  loading: () => "",
+  loading: () => <></>,
 });
 
-function FiltersModal() {
+interface SelectOption {
+  value: string;
+  label: string;
+}
+
+interface GroupedOption {
+  label: string;
+  options: SelectOption[];
+}
+
+interface GeolocationError {
+  code: number;
+  message: string;
+}
+
+const FiltersModal: React.FC = () => {
   const {
     openModal,
     place,
@@ -32,19 +54,22 @@ function FiltersModal() {
     userLocation: state.userLocation,
     setState: state.setState,
   }));
-  const [localPlace, setLocalPlace] = useState(place);
-  const [localByDate, setLocalByDate] = useState(byDate);
-  const [localCategory, setLocalCategory] = useState(category);
-  const [localDistance, setLocalDistance] = useState(distance);
-  const [localUserLocation, setLocalUserLocation] = useState(userLocation);
-  const [userLocationLoading, setUserLocationLoading] = useState(false);
-  const [userLocationError, setUserLocationError] = useState("");
 
-  const regionsAndCitiesArray = useMemo(
+  const [localPlace, setLocalPlace] = useState<string>(place);
+  const [localByDate, setLocalByDate] = useState<string>(byDate);
+  const [localCategory, setLocalCategory] = useState<string>(category);
+  const [localDistance, setLocalDistance] = useState<string>(distance);
+  const [localUserLocation, setLocalUserLocation] =
+    useState<UserLocation | null>(userLocation);
+  const [userLocationLoading, setUserLocationLoading] =
+    useState<boolean>(false);
+  const [userLocationError, setUserLocationError] = useState<string>("");
+  const [selectOption, setSelectOption] = useState<SelectOption | null>(null);
+
+  const regionsAndCitiesArray = useMemo<GroupedOption[]>(
     () => generateRegionsAndTownsOptions(),
     []
   );
-  const [selectOption, setSelectOption] = useState(null);
 
   useEffect(() => {
     if (openModal) {
@@ -69,39 +94,39 @@ function FiltersModal() {
   ]);
 
   const handlePlaceChange = useCallback(
-    ({ value }) => {
+    (option: SelectOption | null) => {
       const regionOption = regionsAndCitiesArray
         .flatMap((group) => group.options)
-        .find((option) => option.value === value);
-      setLocalPlace(value || "");
+        .find((opt) => opt.value === option?.value);
+      setLocalPlace(option?.value || "");
       setSelectOption(regionOption || null);
     },
     [regionsAndCitiesArray]
   );
 
   const handleUserLocation = useCallback(
-    (value) => {
+    (value: string) => {
       if (localUserLocation) {
         setLocalDistance(value);
         return;
       }
 
       setUserLocationLoading(true);
-      setUserLocationError(null);
+      setUserLocationError("");
 
       if ("geolocation" in navigator) {
         navigator.geolocation.getCurrentPosition(
-          function (position) {
-            const location = {
-              lat: position.coords.latitude,
-              lng: position.coords.longitude,
+          (position: GeolocationPosition) => {
+            const location: UserLocation = {
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
             };
 
             setLocalUserLocation(location);
             setUserLocationLoading(false);
             setLocalDistance(value);
           },
-          function (error) {
+          (error: GeolocationError) => {
             console.log("Error occurred. Error code: " + error.code);
             switch (error.code) {
               case 1:
@@ -135,23 +160,27 @@ function FiltersModal() {
   );
 
   const handleDistanceChange = useCallback(
-    (event) => {
-      handleUserLocation(event.target.value);
+    (
+      event:
+        | ChangeEvent<HTMLInputElement>
+        | { target: { value: string | number } }
+    ) => {
+      handleUserLocation(event.target.value as string);
     },
     [handleUserLocation]
   );
 
-  const disablePlace =
+  const disablePlace: boolean =
     localDistance === undefined ||
     localDistance !== "" ||
     Number.isNaN(Number(localDistance));
-  const disableDistance =
-    localPlace || userLocationLoading || userLocationError;
+  const disableDistance: boolean =
+    Boolean(localPlace) || userLocationLoading || Boolean(userLocationError);
 
   const applyFilters = () => {
     setState("place", localPlace);
     setState("byDate", localByDate);
-    setState("category", localCategory);
+    setState("category", localCategory as EventCategory | "");
     setState("distance", localDistance);
     setState("userLocation", localUserLocation);
     setState("filtersApplied", true);
@@ -168,19 +197,21 @@ function FiltersModal() {
     setState("openModal", false);
   };
 
-  const handleByDateChange = useCallback((value) => {
-    setLocalByDate((prevValue) => (prevValue === value ? "" : value));
+  const handleByDateChange = useCallback((value: string | number) => {
+    setLocalByDate((prevValue) => (prevValue === value ? "" : value) as string);
   }, []);
 
-  const handleCategoryChange = useCallback((value) => {
-    setLocalCategory((prevValue) => (prevValue === value ? "" : value));
+  const handleCategoryChange = useCallback((value: string | number) => {
+    setLocalCategory(
+      (prevValue) => (prevValue === value ? "" : value) as string
+    );
   }, []);
 
   return (
     <>
       <Modal
         open={openModal}
-        setOpen={(value) => setState("openModal", value)}
+        setOpen={(value: boolean) => setState("openModal", value)}
         title="Filtres"
         actionButton="Aplicar filtres"
         onActionButtonClick={applyFilters}
@@ -193,7 +224,10 @@ function FiltersModal() {
             <div className="w-full flex flex-col px-0">
               <Select
                 id="options"
-                options={regionsAndCitiesArray}
+                title="Poblacions"
+                options={regionsAndCitiesArray.flatMap(
+                  (group) => group.options
+                )}
                 value={selectOption}
                 onChange={handlePlaceChange}
                 isClearable
@@ -266,10 +300,9 @@ function FiltersModal() {
               <RangeInput
                 key="distance"
                 id="distance"
-                name="distance"
-                min={DISTANCES[0]}
-                max={DISTANCES[DISTANCES.length - 1]}
-                value={localDistance}
+                min={Number(DISTANCES[0])}
+                max={Number(DISTANCES[DISTANCES.length - 1])}
+                value={Number(localDistance)}
                 onChange={handleDistanceChange}
                 label="Esdeveniments a"
                 disabled={disableDistance}
@@ -280,6 +313,8 @@ function FiltersModal() {
       </Modal>
     </>
   );
-}
+};
+
+FiltersModal.displayName = "FiltersModal";
 
 export default memo(FiltersModal);

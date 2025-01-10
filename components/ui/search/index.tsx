@@ -1,14 +1,30 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  ChangeEvent,
+  KeyboardEvent,
+} from "react";
 import XIcon from "@heroicons/react/solid/XIcon";
 import SearchIcon from "@heroicons/react/solid/SearchIcon";
 import useStore from "@store";
+import { sendGoogleEvent } from "@utils/analytics";
+import { StoreState } from "@store";
 
-function debounce(func, wait, immediate) {
-  let timeout;
+type DebouncedFunction<T extends (...args: any[]) => any> = (
+  ...args: Parameters<T>
+) => void;
 
-  return function executedFunction() {
+function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number,
+  immediate: boolean = false
+): DebouncedFunction<T> {
+  let timeout: NodeJS.Timeout | null = null;
+
+  return function executedFunction(this: any, ...args: Parameters<T>) {
     const context = this;
-    const args = arguments;
 
     const later = function () {
       timeout = null;
@@ -17,7 +33,7 @@ function debounce(func, wait, immediate) {
 
     const callNow = immediate && !timeout;
 
-    clearTimeout(timeout);
+    if (timeout) clearTimeout(timeout);
 
     timeout = setTimeout(later, wait);
 
@@ -25,26 +41,28 @@ function debounce(func, wait, immediate) {
   };
 }
 
-const sendSearchTermGA = (searchTerm) => {
-  if (typeof window !== "undefined") {
-    window.gtag &&
-      window.gtag("event", "search", {
-        event_category: "search",
-        event_label: searchTerm,
-        search_term: searchTerm,
-        value: searchTerm,
-      });
-  }
+interface SearchState {
+  searchTerm: string;
+  setState: <K extends keyof StoreState>(key: K, value: StoreState[K]) => void;
+}
+
+const sendSearchTermGA = (searchTerm: string): void => {
+  sendGoogleEvent("search", {
+    category: "search",
+    label: searchTerm,
+    search_term: searchTerm,
+    value: searchTerm,
+  });
 };
 
-export default function Search() {
-  const { searchTerm, setState } = useStore((state) => ({
+export default function Search(): JSX.Element {
+  const { searchTerm, setState } = useStore<SearchState>((state) => ({
     searchTerm: state.searchTerm,
     setState: state.setState,
   }));
-  const [inputValue, setInputValue] = useState(searchTerm);
+  const [inputValue, setInputValue] = useState<string>(searchTerm);
 
-  const searchEvents = useCallback((term) => {
+  const searchEvents = useCallback((term: string): void => {
     if (term && term.length > 0) {
       sendSearchTermGA(term);
     }
@@ -56,7 +74,7 @@ export default function Search() {
 
   const debouncedChangeHandler = useMemo(
     () =>
-      debounce((value) => {
+      debounce((value: string) => {
         setState("searchTerm", value);
         sendSearchTermGA(value);
       }, 1500),
@@ -64,7 +82,7 @@ export default function Search() {
   );
 
   const handleChange = useCallback(
-    (e) => {
+    (e: ChangeEvent<HTMLInputElement>) => {
       const value = e.target.value;
       setInputValue(value);
       debouncedChangeHandler(value);
@@ -73,9 +91,9 @@ export default function Search() {
   );
 
   const handleKeyPress = useCallback(
-    (e) => {
+    (e: KeyboardEvent<HTMLInputElement>) => {
       if (e.key === "Enter") {
-        const value = e.target.value;
+        const value = e.currentTarget.value;
         sendSearchTermGA(value);
         setState("searchTerm", value);
       }
@@ -83,7 +101,7 @@ export default function Search() {
     [setState]
   );
 
-  const clearSearchTerm = useCallback(() => {
+  const clearSearchTerm = useCallback((): void => {
     setState("searchTerm", "");
     setInputValue("");
   }, [setState]);
@@ -106,12 +124,14 @@ export default function Search() {
           onKeyDown={handleKeyPress}
           onChange={handleChange}
           autoComplete="off"
+          aria-label="Search input"
         />
         {inputValue.length > 0 && (
           <div className="flex justify-end items-center cursor-pointer">
             <XIcon
               className="h-4 w-4 text-blackCorp"
               onClick={clearSearchTerm}
+              aria-label="Clear search"
             />
           </div>
         )}

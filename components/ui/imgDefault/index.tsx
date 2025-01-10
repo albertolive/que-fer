@@ -1,11 +1,16 @@
-import { useState, useEffect, memo, useCallback } from "react";
+import { useState, useEffect, memo, useCallback, FC } from "react";
 import LocationMarkerIcon from "@heroicons/react/outline/LocationMarkerIcon";
 import NextImage from "next/image";
 import Tickets from "public/static/images/tickets-color.svg";
 
-let lastRandomIndex = null;
+let lastRandomIndex: number | null = null;
 
-const gradients = [
+interface Gradient {
+  gradient: string;
+  color: string;
+}
+
+const gradients: Gradient[] = [
   {
     gradient: "linear-gradient(120deg, #ff0037, #ff440d, #FF921A)",
     color: "#ff440d",
@@ -33,11 +38,17 @@ const gradients = [
   },
 ];
 
-const ImgDefault = ({ date, location, subLocation }) => {
-  const [background, setBackground] = useState({});
+interface ImgDefaultProps {
+  date: string;
+  location: string;
+  subLocation: string;
+}
 
-  const getRandomBackground = useCallback(() => {
-    let randomIndex;
+const ImgDefault: FC<ImgDefaultProps> = ({ date, location, subLocation }) => {
+  const [background, setBackground] = useState<Gradient>(gradients[0]);
+
+  const getRandomBackground = useCallback((): Gradient => {
+    let randomIndex: number;
 
     do {
       randomIndex = Math.floor(Math.random() * gradients.length);

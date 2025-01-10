@@ -1,10 +1,16 @@
-import { memo } from "react";
+import { memo, ReactElement, JSX } from "react";
+import { Event } from "@store";
 
-function List({ events, children }) {
+interface ListProps {
+  events: Event[];
+  children: (event: Event, index: number) => ReactElement;
+}
+
+function List({ events, children }: ListProps): JSX.Element {
   return (
     <>
       <section className="flex flex-col justify-center items-center">
-        {events.map((event, index) => children(event, index))}
+        {events?.map((event, index) => children(event, index))}
       </section>
     </>
   );
