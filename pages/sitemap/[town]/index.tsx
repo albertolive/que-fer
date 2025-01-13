@@ -1,12 +1,24 @@
+import { GetStaticPaths, GetStaticProps } from "next";
 import Meta from "@components/partials/seo-meta";
 import { siteUrl } from "@config/index";
 import { getAllYears } from "@lib/dates";
 import { MONTHS_URL } from "@utils/constants";
+import { getTownOptionsWithoutRegion } from "@utils/helpers";
 import Link from "next/link";
 
-const years = getAllYears();
+interface SitemapProps {
+  town: string;
+  label: string;
+}
 
-export default function Sitemap({ town, label }) {
+interface StaticPathParams {
+  town: string;
+  [key: string]: string;
+}
+
+const years: number[] = getAllYears();
+
+export default function Sitemap({ town, label }: SitemapProps): JSX.Element {
   return (
     <>
       <Meta
@@ -19,13 +31,13 @@ export default function Sitemap({ town, label }) {
           <h2 className="pb-4">{label}</h2>
         </div>
         <div className="grid overflow-hidden grid-cols-2 lg:grid-cols-4 auto-rows-auto gap-2 grid-flow-row w-auto">
-          {years.map((year) => (
+          {years?.map((year) => (
             <div key={year} className="box">
               <div className="reset-this">
                 <h2 className="pb-2">{year}</h2>
               </div>
               {MONTHS_URL.map((month) => {
-                let textMonth = month;
+                let textMonth: string = month;
                 if (month === "marc") textMonth = month.replace("c", "ç");
                 return (
                   <div key={`${year}-${month}`} className="box py-1">
@@ -47,15 +59,43 @@ export default function Sitemap({ town, label }) {
   );
 }
 
-export async function getStaticPaths() {
+export const getStaticPaths: GetStaticPaths<StaticPathParams> = async () => {
   return {
     paths: [],
     fallback: "blocking",
   };
-}
+};
 
-export async function getStaticProps({ params: { town } }) {
-  const { getTownOptionsWithoutRegion } = require("@utils/helpers");
-  const { label } = getTownOptionsWithoutRegion(town);
-  return { props: { town, label } };
-}
+export const getStaticProps: GetStaticProps<
+  SitemapProps,
+  StaticPathParams
+> = async ({ params }) => {
+  if (!params) {
+    return {
+      notFound: true,
+    };
+  }
+
+  const { town } = params;
+  if (!town) {
+    return {
+      notFound: true,
+    };
+  }
+
+  const townOptions = getTownOptionsWithoutRegion(town);
+  const label = townOptions?.[0]?.label;
+
+  if (!label) {
+    return {
+      notFound: true,
+    };
+  }
+
+  return {
+    props: {
+      town,
+      label,
+    },
+  };
+};

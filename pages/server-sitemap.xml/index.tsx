@@ -1,11 +1,11 @@
-import { getServerSideSitemap } from "next-sitemap";
-
+import { GetServerSideProps } from "next";
+import { getServerSideSitemapLegacy, ISitemapField } from "next-sitemap";
 import { sanitize } from "@utils/helpers";
 import { siteUrl } from "@config/index";
+import { getCalendarEvents } from "@lib/helpers";
+import { Event } from "@store";
 
-export const getServerSideProps = async (ctx) => {
-  const { getCalendarEvents } = require("@lib/helpers");
-
+export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const now = new Date();
   const from = new Date(now.getFullYear(), now.getMonth() - 4);
   const until = new Date(now.getFullYear(), now.getMonth() + 4);
@@ -17,16 +17,26 @@ export const getServerSideProps = async (ctx) => {
     maxResults: 2500,
     filterByDate: false,
   });
-  const normalizedEvents = JSON.parse(JSON.stringify(events));
 
-  const fields = normalizedEvents
+  if (!Array.isArray(events)) {
+    console.error("Error: events is not an array", events);
+    return {
+      props: {},
+    };
+  }
+
+  const normalizedEvents = JSON.parse(JSON.stringify(events)) as Event[];
+
+  const fields: ISitemapField[] = normalizedEvents
     ?.filter((event) => !event.isAd)
     .map((data) => {
-      let field = {
+      let field: ISitemapField & { "image:image"?: string } = {
         loc: `${siteUrl}/e/${data.slug}`,
         lastmod: new Date().toISOString(),
         changefreq: "daily",
+        priority: 0.7,
       };
+
       const defaultImage = `${siteUrl}/static/images/logo-seo-meta.webp`;
       const image = data.imageUploaded || data.eventImage || defaultImage;
 
@@ -40,7 +50,10 @@ export const getServerSideProps = async (ctx) => {
       return field;
     });
 
-  return getServerSideSitemap(ctx, fields);
+  return getServerSideSitemapLegacy(ctx, fields);
 };
 
-export default function Site() {}
+// Default export to prevent next.js errors
+export default function Sitemap() {
+  return null;
+}

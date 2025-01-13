@@ -1,9 +1,25 @@
+import { NextApiRequest, NextApiResponse } from "next";
 import { getWeather } from "@lib/helpers";
+import type { WeatherMap } from "@lib/helpers";
 
-const handler = async (req, res) => {
+interface ErrorResponse {
+  error: string;
+}
+
+const handler = async (
+  req: NextApiRequest,
+  res: NextApiResponse<WeatherMap | ErrorResponse>
+): Promise<void> => {
   try {
     const { location } = req.query;
-    const weather = await getWeather(false, location);
+    const locationString = Array.isArray(location) ? location[0] : location;
+
+    if (!locationString || typeof locationString !== 'string') {
+      res.status(400).json({ error: 'Invalid location parameter' });
+      return;
+    }
+
+    const weather = await getWeather(false, locationString);
 
     const now = new Date();
     const startOfDay = new Date(
@@ -27,7 +43,7 @@ const handler = async (req, res) => {
     res.status(200).json(weather);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error });
+    res.status(500).json({ error: String(error) });
   }
 };
 

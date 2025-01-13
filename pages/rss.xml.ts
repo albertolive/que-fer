@@ -3,10 +3,38 @@ import { Feed } from "feed";
 import { getCalendarEvents } from "@lib/helpers";
 import { getPlaceTypeAndLabel } from "@utils/helpers";
 import { captureException } from "@sentry/nextjs";
+import type { GetServerSideProps } from "next";
+import { Event as EventType } from "@store";
 
 const SITE_NAME = "Esdeveniments.cat";
 
-const getAllArticles = async (region, town, maxEventsPerDay, untilProp = 7) => {
+interface Event extends EventType {
+  nameDay: string;
+  formattedStart: string;
+  location: string;
+  town: string;
+  region: string;
+  mapsLocation?: string;
+  imageUploaded?: string;
+  eventImage?: string;
+  slug: string;
+  startDate: string;
+}
+
+interface QueryParams {
+  region?: string;
+  town?: string;
+  maxEventsPerDay?: string;
+  until?: number;
+}
+
+
+const getAllArticles = async (
+  region: string,
+  town: string,
+  maxEventsPerDay: string | undefined = undefined,
+  untilProp: number = 7
+): Promise<Event[]> => {
   const { label: regionLabel } = getPlaceTypeAndLabel(region);
   const { label: townLabel } = getPlaceTypeAndLabel(town);
 
@@ -26,13 +54,13 @@ const getAllArticles = async (region, town, maxEventsPerDay, untilProp = 7) => {
       maxResults: 1000,
     });
 
-    const shuffledEvents = events;
+    const shuffledEvents = events as Event[];
 
     // Get the last event
     const lastEvent = shuffledEvents[shuffledEvents.length - 1];
 
     // Limit the number of events
-    const limitedEvents = shuffledEvents.slice(0, maxEventsPerDay);
+    const limitedEvents = maxEventsPerDay ? shuffledEvents.slice(0, Number(maxEventsPerDay)) : shuffledEvents;
 
     // Add the last event to the limited events
     if (lastEvent) {
@@ -51,7 +79,7 @@ const getAllArticles = async (region, town, maxEventsPerDay, untilProp = 7) => {
   }
 };
 
-const buildFeed = (items, region, town) => {
+const buildFeed = (items: Event[], region: string, town: string): Feed => {
   const defaultImage = `${siteUrl}/static/images/logo-seo-meta.webp`;
   const { label: regionLabel } = getPlaceTypeAndLabel(region);
   const { label: townLabel } = getPlaceTypeAndLabel(town);
@@ -86,7 +114,7 @@ const buildFeed = (items, region, town) => {
       title: item.title,
       link: `${siteUrl}/e/${item.slug}`,
       description,
-      content: item.mapsLocation,
+      content: item.location,
       date: new Date(item.startDate),
       image: item.imageUploaded || item.eventImage || defaultImage,
     });
@@ -95,12 +123,10 @@ const buildFeed = (items, region, town) => {
   return feed;
 };
 
-export const getServerSideProps = async (context) => {
+export const getServerSideProps: GetServerSideProps = async (context) => {
   if (context && context.res) {
     const { res, query } = context;
-
-    // Extract region and town from query parameters
-    const { region, town, maxEventsPerDay, until } = query;
+    const { region = "", town = "", maxEventsPerDay, until } = query as QueryParams;
 
     const articles = await getAllArticles(region, town, maxEventsPerDay, until);
 
@@ -115,6 +141,6 @@ export const getServerSideProps = async (context) => {
   };
 };
 
-const RssPage = () => null;
+const RssPage: React.FC = () => null;
 
 export default RssPage;

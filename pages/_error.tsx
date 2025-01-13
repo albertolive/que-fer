@@ -1,7 +1,18 @@
+import type { NextPage, NextPageContext } from "next";
+import type { ErrorProps } from "next/error";
 import NextErrorComponent from "next/error";
 import { captureException, flush } from "@sentry/nextjs";
 
-const MyError = ({ statusCode, hasGetInitialPropsRun, err }) => {
+interface MyErrorProps extends ErrorProps {
+  hasGetInitialPropsRun: boolean;
+  err?: Error;
+}
+
+const MyError: NextPage<MyErrorProps> = ({
+  statusCode,
+  hasGetInitialPropsRun,
+  err,
+}: MyErrorProps) => {
   if (!hasGetInitialPropsRun && err) {
     // getInitialProps is not called in case of
     // https://github.com/vercel/next.js/issues/8592. As a workaround, we pass
@@ -13,18 +24,20 @@ const MyError = ({ statusCode, hasGetInitialPropsRun, err }) => {
   return <NextErrorComponent statusCode={statusCode} />;
 };
 
-MyError.getInitialProps = async (context) => {
+MyError.getInitialProps = async (
+  context: NextPageContext
+): Promise<MyErrorProps> => {
   const errorInitialProps = await NextErrorComponent.getInitialProps(context);
 
   const { res, err, asPath } = context;
 
   // Workaround for https://github.com/vercel/next.js/issues/8592, mark when
   // getInitialProps has run
-  errorInitialProps.hasGetInitialPropsRun = true;
+  const hasGetInitialPropsRun = true;
 
   // Returning early because we don't want to log 404 errors to Sentry.
   if (res?.statusCode === 404) {
-    return errorInitialProps;
+    return { ...errorInitialProps, hasGetInitialPropsRun };
   }
 
   // Running on the server, the response object (`res`) is available.
@@ -41,13 +54,15 @@ MyError.getInitialProps = async (context) => {
   //    Boundaries: https://reactjs.org/docs/error-boundaries.html
 
   if (err) {
-    captureException(err);
+    if (err instanceof Error) {
+      captureException(err);
+    }
 
     // Flushing before returning is necessary if deploying to Vercel, see
     // https://vercel.com/docs/platform/limits#streaming-responses
     await flush(2000);
 
-    return errorInitialProps;
+    return { ...errorInitialProps, hasGetInitialPropsRun, err };
   }
 
   // If this point is reached, getInitialProps was called without any
@@ -58,7 +73,7 @@ MyError.getInitialProps = async (context) => {
   );
   await flush(2000);
 
-  return errorInitialProps;
+  return { ...errorInitialProps, hasGetInitialPropsRun };
 };
 
 export default MyError;

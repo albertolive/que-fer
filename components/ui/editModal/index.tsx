@@ -15,7 +15,7 @@ interface EditModalProps {
   openDeleteReasonModal: boolean;
   // eslint-disable-next-line no-unused-vars
   setReasonToDelete: (reason: DeleteReason) => void;
-  reasonToDelete?: DeleteReason;
+  reasonToDelete?: DeleteReason | null | undefined;
   onSendDeleteReason: () => void;
   onRemove: () => void;
 }

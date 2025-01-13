@@ -2,7 +2,11 @@ import Image from "next/image";
 import { useRef, useState } from "react";
 import UploadIcon from "@heroicons/react/outline/UploadIcon";
 
-type AcceptedImageTypes = "image/jpeg" | "image/png" | "image/jpg" | "image/webp";
+type AcceptedImageTypes =
+  | "image/jpeg"
+  | "image/png"
+  | "image/jpg"
+  | "image/webp";
 
 interface ImageUploaderProps {
   value: string | null;
@@ -10,7 +14,11 @@ interface ImageUploaderProps {
   progress: number;
 }
 
-const ImageUploader: React.FC<ImageUploaderProps> = ({ value, onUpload, progress }) => {
+const ImageUploader: React.FC<ImageUploaderProps> = ({
+  value,
+  onUpload,
+  progress,
+}) => {
   const fileSelect = useRef<HTMLInputElement>(null);
   const [imgData, setImgData] = useState<string | null>(value);
   const [dragOver, setDragOver] = useState<boolean>(false);

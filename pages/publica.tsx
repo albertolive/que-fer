@@ -21,14 +21,38 @@ import {
   generateTownsOptions,
 } from "@utils/helpers";
 import { siteUrl } from "@config/index";
+import type { NextPage } from "next";
 
-const defaultForm = {
+interface FormData {
+  title: string;
+  description: string;
+  startDate: Date | undefined;
+  endDate: Date | undefined;
+  region: SelectOption | null;
+  town: SelectOption | null;
+  location: string;
+  imageUploaded: File | null;
+  eventUrl: string;
+}
+
+interface SelectOption {
+  value: string;
+  label: string;
+}
+
+interface FormState {
+  isDisabled: boolean;
+  isPristine: boolean;
+  message: string;
+}
+
+const defaultForm: FormData = {
   title: "",
   description: "",
-  startDate: "",
-  endDate: "",
-  region: "",
-  town: "",
+  startDate: undefined,
+  endDate: undefined,
+  region: null,
+  town: null,
   location: "",
   imageUploaded: null,
   eventUrl: "",
@@ -38,35 +62,25 @@ const _createFormState = (
   isDisabled = true,
   isPristine = true,
   message = ""
-) => ({
+): FormState => ({
   isDisabled,
   isPristine,
   message,
 });
 
-const createFormState = (
-  {
-    title,
-    description,
-    startDate,
-    endDate,
-    region,
-    town,
-    location,
-    imageUploaded,
-    eventUrl,
-  },
-  isPristine
-) => {
+const createFormState = (form: FormData, isPristine: boolean): FormState => {
   if (!isPristine) {
     return _createFormState(true, true, "");
   }
 
-  if (!title || title.length < 10) {
+  if (!form.title || form.title.length < 10) {
     return _createFormState(true, true, "Títol obligatori, mínim 10 caràcters");
   }
 
-  if (!description.replace(/(<([^>]+)>)/gi, "") || description.length < 15) {
+  if (
+    !form.description.replace(/(<([^>]+)>)/gi, "") ||
+    form.description.length < 15
+  ) {
     return _createFormState(
       true,
       true,
@@ -74,31 +88,31 @@ const createFormState = (
     );
   }
 
-  if (!imageUploaded) {
+  if (!form.imageUploaded) {
     return _createFormState(true, true, "Imatge obligatoria");
   }
 
-  if (!region) {
+  if (!form.region) {
     return _createFormState(true, true, "Comarca obligatoria");
   }
 
-  if (!town) {
+  if (!form.town) {
     return _createFormState(true, true, "Ciutat obligatoria");
   }
 
-  if (!location) {
+  if (!form.location) {
     return _createFormState(true, true, "Lloc obligatori");
   }
 
-  if (!startDate) {
+  if (!form.startDate) {
     return _createFormState(true, true, "Data inici obligatòria");
   }
 
-  if (!endDate) {
+  if (!form.endDate) {
     return _createFormState(true, true, "Data final obligatòria");
   }
 
-  if (endDate.getTime() <= startDate.getTime()) {
+  if (form.endDate.getTime() <= form.startDate.getTime()) {
     return _createFormState(
       true,
       true,
@@ -107,79 +121,81 @@ const createFormState = (
   }
 
   const urlPattern = new RegExp(
-    "^(https?:\\/\\/)?" + // protocol
-      "((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.?)+[a-z]{2,}|" + // domain name
-      "((\\d{1,3}\\.){3}\\d{1,3}))" + // OR ip (v4) address
-      "(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*" + // port and path
-      "(\\?[;&a-z\\d%_.~+=-]*)?" + // query string
+    "^(https?:\\/\\/)?" +
+      "((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.?)+[a-z]{2,}|" +
+      "((\\d{1,3}\\.){3}\\d{1,3}))" +
+      "(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*" +
+      "(\\?[;&a-z\\d%_.~+=-]*)?" +
       "(\\#[-a-z\\d_]*)?$",
     "i"
   );
 
-  if (eventUrl && !urlPattern.test(eventUrl)) {
+  if (form.eventUrl && !urlPattern.test(form.eventUrl)) {
     return _createFormState(true, true, "Enllaç no vàlid");
   }
 
   return _createFormState(false);
 };
 
-export default function Publica() {
+const Publica: NextPage = () => {
   const router = useRouter();
-  const [form, setForm] = useState(defaultForm);
-  const [region, setRegion] = useState("");
-  const [formState, setFormState] = useState(_createFormState());
-  const [isLoading, setIsLoading] = useState(false);
-  const [imageToUpload, setImageToUpload] = useState(null);
-  const [progress, setProgress] = useState(0);
+  const [form, setForm] = useState<FormData>(defaultForm);
+  const [region, setRegion] = useState<string>("");
+  const [formState, setFormState] = useState<FormState>(_createFormState());
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [imageToUpload, setImageToUpload] = useState<string | null>(null);
+  const [progress, setProgress] = useState<number>(0);
 
   const regionsArray = useMemo(() => generateRegionsOptions(), []);
   const citiesArray = useMemo(() => generateTownsOptions(region), [region]);
 
-  const handleFormChange = (name, value) => {
+  const handleFormChange = (name: keyof FormData, value: any) => {
     const newForm = { ...form, [name]: value };
-
     setForm(newForm);
-    setFormState(createFormState(newForm));
+    setFormState(createFormState(newForm, true));
   };
 
-  const handleChange = ({ target: { name, value } }) =>
-    handleFormChange(name, value);
+  const handleChange = (
+    e: React.ChangeEvent<{ name: string; value: string }>
+  ) => handleFormChange(e.target.name as keyof FormData, e.target.value);
 
-  const handleChangeDate = (name, value) => handleFormChange(name, value);
+  const handleChangeDate = (
+    name: keyof Pick<FormData, "startDate" | "endDate">,
+    value: Date | null
+  ) => handleFormChange(name, value as any);
 
-  const handleRegionChange = (region) => {
-    setRegion(region.value);
+  const handleRegionChange = (region: SelectOption | null) => {
+    setRegion(region?.value || "");
     handleFormChange("region", region);
   };
 
-  const handleImageChange = (value) => {
-    setImageToUpload(value);
-    handleFormChange("imageUploaded", value);
+  const handleImageChange = (file: File) => {
+    const reader = new FileReader();
+    reader.addEventListener("load", () => {
+      setImageToUpload(reader.result as string);
+    });
+    reader.readAsDataURL(file);
+    handleFormChange("imageUploaded", file);
   };
 
-  const handleTownChange = (town) => handleFormChange("town", town);
+  const handleTownChange = (town: SelectOption | null) =>
+    handleFormChange("town", town);
 
-  const goToEventPage = (url) => ({
-    pathname: `${url}`,
+  const goToEventPage = (url: string) => ({
+    pathname: url,
     query: { newEvent: true },
   });
 
   const onSubmit = async () => {
-    const newFormState = createFormState(
-      form,
-      formState.isPristine,
-      null,
-      true
-    );
-
+    const newFormState = createFormState(form, formState.isPristine);
     setFormState(newFormState);
 
     if (!newFormState.isDisabled) {
       setIsLoading(true);
 
       try {
-        const { value: townValue } = form.town;
-        const { value: regionValue } = form.region;
+        const townValue = form.town?.value ?? "";
+        const regionValue = form.region?.value ?? "";
         const location = `${form.location}, ${getTownLabel(
           townValue
         )}, ${getRegionLabelByValue(regionValue)}`;
@@ -199,15 +215,14 @@ export default function Publica() {
 
         if (rawResponse.ok) {
           const { id } = await rawResponse.json();
-
           const { formattedStart } = getFormattedDate(
-            form.startDate,
-            form.endDate
+            form.startDate ? form.startDate.toISOString() : "",
+            form.endDate ? form.endDate.toISOString() : ""
           );
           const slugifiedTitle = slug(form.title, formattedStart, id);
 
           if (env === "prod") {
-            fetch(process.env.NEXT_PUBLIC_NEW_EVENT_EMAIL_URL, {
+            fetch(process.env.NEXT_PUBLIC_NEW_EVENT_EMAIL_URL as string, {
               method: "POST",
               headers: {
                 Accept: "application/json",
@@ -223,10 +238,9 @@ export default function Publica() {
           }
 
           imageToUpload
-            ? uploadFile(id, slugifiedTitle)
+            ? await uploadFile(id, slugifiedTitle)
             : router.push(goToEventPage(`/e/${slugifiedTitle}`));
         } else {
-          // Handle API error
           const errorText = await rawResponse.text();
           const errorMessage = `Error submitting form: ${errorText}`;
           console.error(errorMessage);
@@ -234,7 +248,6 @@ export default function Publica() {
           setIsLoading(false);
         }
       } catch (error) {
-        // Handle fetch or other errors
         console.error("Error submitting form:", error);
         setIsLoading(false);
         setFormState(
@@ -244,12 +257,16 @@ export default function Publica() {
             "Hi ha hagut un error, torna-ho a provar més tard o contacta amb nosaltres."
           )
         );
-        captureException(new Error(`Error submitting form: ${error.message}`));
+        if (error instanceof Error) {
+          captureException(
+            new Error(`Error submitting form: ${error.message}`)
+          );
+        }
       }
     }
   };
 
-  const uploadFile = (id, slugifiedTitle) => {
+  const uploadFile = async (id: string, slugifiedTitle: string) => {
     try {
       const url = `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUDNAME}/upload`;
       const xhr = new XMLHttpRequest();
@@ -262,13 +279,12 @@ export default function Publica() {
       });
 
       xhr.onreadystatechange = () => {
-        if (xhr.readyState == 4) {
-          if (xhr.status == 200) {
-            const public_id = JSON.parse(xhr.responseText).public_id;
-            console.log(public_id);
+        if (xhr.readyState === 4) {
+          if (xhr.status === 200) {
+            const response = JSON.parse(xhr.responseText);
+            console.log(response.public_id);
             router.push(goToEventPage(`/e/${slugifiedTitle}`));
           } else {
-            // The server responded with an error status
             const error = JSON.parse(xhr.responseText).error;
             console.error("Error uploading file:", error);
             setIsLoading(false);
@@ -288,14 +304,13 @@ export default function Publica() {
 
       fd.append(
         "upload_preset",
-        process.env.NEXT_PUBLIC_CLOUDINARY_UNSIGNED_UPLOAD_PRESET
+        process.env.NEXT_PUBLIC_CLOUDINARY_UNSIGNED_UPLOAD_PRESET as string
       );
       fd.append("tags", "browser_upload");
-      fd.append("file", imageToUpload);
+      fd.append("file", imageToUpload as string);
       fd.append("public_id", id);
       xhr.send(fd);
     } catch (error) {
-      // Handle fetch or other errors
       console.error("Error uploading file:", error);
       setIsLoading(false);
       setFormState(
@@ -305,7 +320,9 @@ export default function Publica() {
           "Hi ha hagut un error en pujar la imatge, torna-ho a provar més tard o contacta amb nosaltres."
         )
       );
-      captureException(new Error(`Error uploading file: ${error.message}`));
+      if (error instanceof Error) {
+        captureException(new Error(`Error uploading file: ${error.message}`));
+      }
       throw error;
     }
   };
@@ -323,7 +340,7 @@ export default function Publica() {
             <h1 className="text-center italic uppercase font-semibold">
               Publica un esdeveniment
             </h1>
-            <p className=" text-sm text-center">* camps obligatoris</p>
+            <p className="text-sm text-center">* camps obligatoris</p>
           </div>
           <div className="w-full flex flex-col justify-center items-center gap-y-4 pt-4 sm:w-[580px] md:w-[768px] lg:w-[1024px]">
             <Input
@@ -381,8 +398,8 @@ export default function Publica() {
             />
 
             <DatePicker
-              startDate={form.start}
-              endDate={form.end}
+              startDate={form.startDate}
+              endDate={form.endDate}
               onChange={handleChangeDate}
             />
           </div>
@@ -429,4 +446,6 @@ export default function Publica() {
       </div>
     </>
   );
-}
+};
+
+export default Publica;

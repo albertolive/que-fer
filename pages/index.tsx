@@ -4,19 +4,44 @@ import { twoWeeksDefault } from "@lib/dates";
 import { MAX_RESULTS, SEARCH_TERMS_SUBSET } from "@utils/constants";
 import Events from "@components/ui/events";
 import { initializeStore } from "@utils/initializeStore";
+import type { GetStaticProps } from "next";
+import { Event, EventLocation } from "../store";
 
-export default function Home({ initialState }) {
+interface InitialState {
+  categorizedEvents: Record<string, Event[]>;
+  latestEvents: Event[];
+  userLocation?: EventLocation | null;
+  currentYear?: number;
+}
+
+interface HomeProps {
+  initialState: InitialState;
+}
+
+export default function Home({ initialState }: HomeProps): JSX.Element {
   useEffect(() => {
     initializeStore(initialState);
   }, [initialState]);
 
-  return <Events />;
+  const { categorizedEvents } = initialState;
+
+  return (
+    <>
+      <Events
+        events={categorizedEvents.events || []}
+        hasServerFilters={false}
+      />
+    </>
+  );
 }
 
-export async function getStaticProps() {
+export const getStaticProps: GetStaticProps<HomeProps> = async () => {
   const { from, until } = twoWeeksDefault();
 
-  const initialState = {};
+  const initialState: InitialState = {
+    categorizedEvents: { events: [] },
+    latestEvents: [],
+  };
 
   const [categorizedResult, latestResult] = await Promise.allSettled([
     getCategorizedEvents({
@@ -34,10 +59,13 @@ export async function getStaticProps() {
     }),
   ]);
 
-  initialState.categorizedEvents =
-    categorizedResult.status === "fulfilled" ? categorizedResult.value : {};
-  initialState.latestEvents =
-    latestResult.status === "fulfilled" ? latestResult.value.events : [];
+  if (categorizedResult.status === "fulfilled") {
+    initialState.categorizedEvents = categorizedResult.value || {};
+  }
+
+  if (latestResult.status === "fulfilled") {
+    initialState.latestEvents = latestResult.value.events || [];
+  }
 
   return {
     props: {
@@ -45,4 +73,4 @@ export async function getStaticProps() {
     },
     revalidate: 60,
   };
-}
+};

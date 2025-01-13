@@ -2,8 +2,41 @@ import Link from "next/link";
 import Meta from "@components/partials/seo-meta";
 import { siteUrl } from "@config/index";
 import Image from "next/image";
+import type { NextPage } from "next";
 
-export default function QuiSom() {
+interface TeamMember {
+  name: string;
+  role: string;
+  title: string;
+  image: string;
+  linkedin: string;
+}
+
+const teamMembers: TeamMember[] = [
+  {
+    name: "Albert Olivé Corbella",
+    role: "Senior Full Stack Developer",
+    title: "CTO Fundador",
+    image: "/static/images/linkedin_albert.jpeg",
+    linkedin: "https://www.linkedin.com/in/albertolivecorbella/",
+  },
+  {
+    name: "Andreu Benítez Moreno",
+    role: "UI Engineer | Graphic Designer",
+    title: "Co-Fundador",
+    image: "/static/images/linkedin_andreu.jpeg",
+    linkedin: "https://www.linkedin.com/in/andreubenitezmoreno/",
+  },
+  {
+    name: "Gerard Rovellat Carbó",
+    role: "Software Engineer | Backend Developer",
+    title: "Co-Fundador",
+    image: "/static/images/linkedin_gerard.jpg",
+    linkedin: "https://www.linkedin.com/in/gerardrovellatcarbo/",
+  },
+];
+
+const QuiSom: NextPage = () => {
   return (
     <>
       <Meta
@@ -46,92 +79,40 @@ export default function QuiSom() {
         <div className="w-full flex flex-col justify-center gap-8 pb-20">
           <h2 className="text-center">El nostre equip</h2>
           <div className="w-full flex flex-col sm:flex-row justify-center items-center gap-8">
-            <div className="w-[200px] h-[414px] bg-whiteCorp rounded-md shadow-xl">
-              <div className="h-[185px] overflow-hidden">
-                <Image
-                  className="object-cover object-top rounded-t-md"
-                  src="/static/images/linkedin_albert.jpeg"
-                  alt="Albert Olivé Corbella"
-                  width={200}
-                  height={200}
-                />
-              </div>
-              <div className="w-full flex flex-col justify-center items-center gap-6 py-8">
-                <div className="w-full flex justify-start items-start gap-2 pt-4">
-                  <div className="w-2 h-6 bg-primary"></div>
-                  <h2>Albert Olivé Corbella</h2>
+            {teamMembers.map((member) => (
+              <div key={member.name} className="w-[200px] h-[414px] bg-whiteCorp rounded-md shadow-xl">
+                <div className="h-[185px] overflow-hidden">
+                  <Image
+                    className="object-cover object-top rounded-t-md"
+                    src={member.image}
+                    alt={member.name}
+                    width={200}
+                    height={200}
+                  />
                 </div>
-                <div className="w-full flex flex-col justify-start items-start px-4">
-                  <p className="w-full">Senior Full Stack Developer</p>
-                  <p className="w-full text-sm font-semibold">CTO Fundador</p>
+                <div className="w-full flex flex-col justify-center items-center gap-6 py-8">
+                  <div className="w-full flex justify-start items-start gap-2 pt-4">
+                    <div className="w-2 h-6 bg-primary"></div>
+                    <h2>{member.name}</h2>
+                  </div>
+                  <div className="w-full flex flex-col justify-start items-start px-4">
+                    <p className="w-full">{member.role}</p>
+                    <p className="w-full text-sm font-semibold">{member.title}</p>
+                  </div>
+                  <a
+                    href={member.linkedin}
+                    className="w-full text-center hover:bg-primary hover:text-whiteCorp font-bold px-4 py-3 my-3 ease-in-out duration-300 cursor-pointer"
+                  >
+                    <p>LinkedIn</p>
+                  </a>
                 </div>
-                <a
-                  href="https://www.linkedin.com/in/albertolivecorbella/"
-                  className="w-full text-center hover:bg-primary hover:text-whiteCorp font-bold px-4 py-3 my-3 ease-in-out duration-300 cursor-pointer"
-                >
-                  <p>LinkedIn</p>
-                </a>
               </div>
-            </div>
-            <div className="w-[200px] h-[414px] bg-whiteCorp rounded-md shadow-xl">
-              <div className="h-[185px] overflow-hidden">
-                <Image
-                  className="object-cover object-top rounded-t-md"
-                  src="/static/images/linkedin_andreu.jpeg"
-                  alt="Andreu Benitez Moreno"
-                  width={200}
-                  height={200}
-                />
-              </div>
-              <div className="w-full flex flex-col justify-center items-center gap-6 py-8">
-                <div className="w-full flex justify-start items-start gap-2 pt-4">
-                  <div className="w-2 h-6 bg-primary"></div>
-                  <h2>Andreu Benítez Moreno</h2>
-                </div>
-                <div className="w-full flex flex-col justify-start items-start px-4">
-                  <p className="w-full">UI Engineer | Graphic Designer</p>
-                  <p className="w-full text-sm font-semibold">Co-Fundador</p>
-                </div>
-                <a
-                  href="https://www.linkedin.com/in/andreubenitezmoreno/"
-                  className="w-full text-center hover:bg-primary hover:text-whiteCorp font-bold px-4 py-3 my-3 ease-in-out duration-300 cursor-pointer"
-                >
-                  <p>LinkedIn</p>
-                </a>
-              </div>
-            </div>
-            <div className="w-[200px] h-[414px] bg-whiteCorp rounded-md shadow-xl">
-              <div className="h-[185px] overflow-hidden">
-                <Image
-                  className="object-cover object-top rounded-t-md"
-                  src="/static/images/linkedin_gerard.jpg"
-                  alt="Gerard Rovellat Carbó"
-                  width={200}
-                  height={200}
-                />
-              </div>
-              <div className="w-full flex flex-col justify-center items-center gap-6 py-8">
-                <div className="w-full flex justify-start items-start gap-2 pt-4">
-                  <div className="w-2 h-6 bg-primary"></div>
-                  <h2>Gerard Rovellat Carbó</h2>
-                </div>
-                <div className="w-full flex flex-col justify-start items-start px-4">
-                  <p className="w-full">
-                    Software Engineer | Backend Developer
-                  </p>
-                  <p className="w-full text-sm font-semibold">Co-Fundador</p>
-                </div>
-                <a
-                  href="https://www.linkedin.com/in/gerardrovellatcarbo/"
-                  className="w-full text-center hover:bg-primary hover:text-whiteCorp font-bold px-4 py-3 my-3 ease-in-out duration-300 cursor-pointer"
-                >
-                  <p>LinkedIn</p>
-                </a>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </div>
     </>
   );
-}
+};
+
+export default QuiSom;

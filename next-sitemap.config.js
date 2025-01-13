@@ -1,3 +1,5 @@
+/** @type {import('next-sitemap').IConfig} */
+
 const siteUrl =
   process.env.NODE_ENV !== "production"
     ? "http://localhost:3000"
@@ -8,28 +10,27 @@ const siteUrl =
 
 module.exports = {
   siteUrl,
+  changefreq: "daily",
+  priority: 0.7,
   exclude: [
-    "api",
-    "_app.js",
-    "_document.js",
-    "404.js",
-    "_error.js",
-    "sitemap.xml.js",
-    "server-sitemap.xml",
-    "server-sitemap.xml.js",
+    "/api/*",
+    "/_app",
+    "/_document",
+    "/404",
+    "/_error",
+    "/sitemap.xml",
     "/server-sitemap.xml",
-    "/server-sitemap.xml.js",
-    "rss.xml",
     "/rss.xml",
-    ".next",
-    "___next_launcher.js",
-    "___vc",
-    "node_modules",
-    "package.json",
-    "e/[eventId]",
-    "[place]",
+    "/.next/*",
+    "/___next_launcher",
+    "/___vc/*",
+    "/node_modules/*",
+    "/package.json",
+    "/e/[eventId]/*",
+    "/[place]/*",
   ],
   generateRobotsTxt: true,
+  generateIndexSitemap: true,
   robotsTxtOptions: {
     policies: [
       {
@@ -43,4 +44,6 @@ module.exports = {
       `${siteUrl}/server-sitemap.xml`,
     ],
   },
+  // Add output property for Next.js
+  output: "standalone",
 };
