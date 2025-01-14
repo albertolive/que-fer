@@ -23,7 +23,9 @@ interface FilterState {
   distance: string;
   openModal: boolean;
   setState: (
+    // eslint-disable-next-line no-unused-vars
     key: "place" | "byDate" | "category" | "distance" | "openModal",
+    // eslint-disable-next-line no-unused-vars
     value: string | boolean
   ) => void;
 }

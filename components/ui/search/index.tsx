@@ -47,6 +47,7 @@ function debounce<T extends (...args: any[]) => any>(
 
 interface SearchState {
   searchTerm: string;
+  // eslint-disable-next-line no-unused-vars
   setState: <K extends keyof StoreState>(key: K, value: StoreState[K]) => void;
 }
 

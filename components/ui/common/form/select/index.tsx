@@ -67,9 +67,7 @@ const customStyles: StylesConfig<Option, false, GroupBase<Option>> = {
   }),
 };
 
-const Input = (props: any) => (
-  <components.Input {...props} autoComplete="new-password" />
-);
+const Input = components.Input;
 
 export default function SelectComponent({
   id,
@@ -114,7 +112,9 @@ export default function SelectComponent({
           instanceId={id}
           isSearchable
           isClearable={isClearable}
-          formatCreateLabel={(inputValue) => `Afegir nou lloc: "${inputValue}"`}
+          formatCreateLabel={(inputValue: string) =>
+            `Afegir nou lloc: "${inputValue}"`
+          }
           placeholder={`Selecciona ${placeholder}`}
           defaultValue={selectedOption || initialValue}
           value={selectedOption || initialValue}
