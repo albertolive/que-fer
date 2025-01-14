@@ -7,7 +7,7 @@ const Year: NextPage = () => {
 
   useEffect(() => {
     router.replace("/sitemap");
-  }, []);
+  }, [router]);
 
   return null;
 };

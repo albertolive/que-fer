@@ -1,11 +1,11 @@
-import { useEffect } from "react";
+import { useEffect, FC } from "react";
 import { env } from "@utils/helpers";
 
 interface ReportViewProps {
   slug: string;
 }
 
-const ReportView: React.FC<ReportViewProps> = ({ slug }) => {
+const ReportView: FC<ReportViewProps> = ({ slug }) => {
   useEffect(() => {
     if (env === "prod") {
       fetch("/api/reportView", {

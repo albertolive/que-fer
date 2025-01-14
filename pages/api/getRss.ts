@@ -59,7 +59,7 @@ class ValidationError extends Error {
 
 async function fetchWithTimeout(
   url: string,
-  options: RequestInit,
+  options: any,
   timeout = 25000
 ): Promise<Response> {
   const controller = new AbortController();

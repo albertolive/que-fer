@@ -1,4 +1,4 @@
-import { memo, useCallback, MouseEvent } from "react";
+import { memo, useCallback, MouseEvent, JSX } from "react";
 import { DateOption } from "@utils/constants";
 import XIcon from "@heroicons/react/solid/XIcon";
 import ChevronDownIcon from "@heroicons/react/solid/ChevronDownIcon";

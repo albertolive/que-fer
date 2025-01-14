@@ -92,9 +92,7 @@ export interface StoreState extends FilterState, UIState, EventState {
 
 // Store actions interface
 export interface StoreActions {
-  // eslint-disable-next-line no-unused-vars
-  setState: (key: keyof StoreState, value: StoreState[keyof StoreState]) => void;
-  // eslint-disable-next-line no-unused-vars
+  setState: <K extends keyof StoreState>(key: K, value: StoreState[K]) => void;
   initializeStore: (initialState: Partial<StoreState>) => void;
   areFiltersActive: () => boolean;
 }

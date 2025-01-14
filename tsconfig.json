@@ -11,7 +11,7 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "incremental": true,
     "downlevelIteration": true,
     "plugins": [
@@ -30,14 +30,15 @@
       "@lib/*": ["lib/*"],
       "@config/*": ["config/*"],
       "@public/*": ["public/*"],
-      "@types/*": ["types/*"]
+      "@types/*": ["types/*"],
+      "react": [ "./node_modules/@types/react" ]
     },
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "types": ["react-datepicker"]
+    "types": ["./types/react-datepicker.d.ts"]
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules"],
 }

@@ -1,4 +1,4 @@
-import { useRef, memo, FC } from "react";
+import { useRef, memo, FC, RefObject } from "react";
 import dynamic from "next/dynamic";
 import Filters from "@components/ui/filters";
 import useOnScreen from "@components/hooks/useOnScreen";
@@ -17,7 +17,8 @@ const SubMenu: FC = () => {
     openModal: state.openModal,
   }));
 
-  const filtersModalRef = useRef<HTMLDivElement>(null);
+  const filtersModalRef = useRef<Element>(null) as RefObject<Element>;
+  const divRef = useRef<HTMLDivElement>(null);
   const isFiltersModalVisible = useOnScreen(filtersModalRef, {
     freezeOnceVisible: true,
   });
@@ -25,10 +26,7 @@ const SubMenu: FC = () => {
   return (
     <>
       {openModal && (
-        <div
-          className="flex justify-center items-center gap-4"
-          ref={filtersModalRef}
-        >
+        <div className="flex justify-center items-center gap-4" ref={divRef}>
           {isFiltersModalVisible && <FiltersModal />}
         </div>
       )}

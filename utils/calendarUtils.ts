@@ -1,4 +1,4 @@
-interface CalendarParams {
+export interface CalendarParams {
   title: string;
   description: string;
   location: string;
@@ -7,7 +7,7 @@ interface CalendarParams {
   canonical: string;
 }
 
-interface CalendarUrls {
+export interface CalendarUrls {
   google: string;
   outlook: string;
   ical: string;

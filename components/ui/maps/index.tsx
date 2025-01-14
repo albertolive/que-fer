@@ -1,13 +1,13 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, FC, RefObject } from "react";
 
 interface MapsProps {
   location: string;
 }
 
-const Maps: React.FC<MapsProps> = ({ location }) => {
+const Maps: FC<MapsProps> = ({ location }) => {
   const mapRef = useRef<HTMLDivElement | null>(
     null
-  ) as React.RefObject<HTMLDivElement>;
+  ) as RefObject<HTMLDivElement>;
 
   useEffect(() => {
     const map = mapRef.current;

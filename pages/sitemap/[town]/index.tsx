@@ -1,3 +1,4 @@
+import { JSX } from "react";
 import { GetStaticPaths, GetStaticProps } from "next";
 import Meta from "@components/partials/seo-meta";
 import { siteUrl } from "@config/index";

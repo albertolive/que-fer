@@ -1,6 +1,7 @@
-import { useEffect, useRef, CSSProperties } from "react";
+import { useEffect, useRef, CSSProperties, JSX } from "react";
 
 declare global {
+  // eslint-disable-next-line no-unused-vars
   interface Window {
     adsbygoogle: any[];
   }
@@ -10,11 +11,12 @@ type AdStatus = "unfilled" | "filled";
 
 interface GoogleAdsenseContainerProps {
   id: string;
-  style?: React.CSSProperties;
+  style?: CSSProperties;
   layout?: "horizontal" | "vertical" | "in-article" | "in-feed";
   format?: "auto" | "rectangle" | "vertical" | "horizontal";
   responsive?: boolean;
   slot: string;
+  // eslint-disable-next-line no-unused-vars
   setDisplayAd?: (display: boolean) => void;
   adClient?: string;
 }

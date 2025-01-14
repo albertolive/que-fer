@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, JSX } from "react";
 import dynamic from "next/dynamic";
 import Head from "next/head";
 

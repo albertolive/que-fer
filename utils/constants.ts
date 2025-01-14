@@ -1,24 +1,3 @@
-import {
-  barcelones,
-  osona,
-  selva,
-  baixLlobregat,
-  altEmporda,
-  anoia,
-  bages,
-  llucanes,
-  altPenedes,
-  garraf,
-  maresme,
-  vallesOccidental,
-  vallesOriental,
-  baixEmporda,
-  bergueda,
-  moianes,
-  urgell,
-  tarragones,
-} from "@utils/cities";
-
 export const MAX_RESULTS = 15;
 
 export const DAYS: string[] = [
@@ -91,7 +70,7 @@ export const CATEGORY_NAMES_MAP: Categories = Object.fromEntries(
   ])
 );
 
-interface DateOption {
+export interface DateOption {
   value: string;
   label: string;
 }
@@ -122,24 +101,3 @@ export interface RegionData {
 }
 
 export type CitiesData = Map<string, RegionData>;
-
-export const CITIES_DATA = new Map([
-  barcelones,
-  osona,
-  selva,
-  baixLlobregat,
-  altEmporda,
-  anoia,
-  bages,
-  llucanes,
-  altPenedes,
-  garraf,
-  maresme,
-  vallesOccidental,
-  vallesOriental,
-  baixEmporda,
-  bergueda,
-  moianes,
-  urgell,
-  tarragones,
-]);

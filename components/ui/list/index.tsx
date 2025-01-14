@@ -3,6 +3,7 @@ import { Event } from "@store";
 
 interface ListProps {
   events: Event[];
+  // eslint-disable-next-line no-unused-vars
   children: (event: Event, index: number) => ReactElement;
 }
 

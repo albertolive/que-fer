@@ -1,5 +1,5 @@
 import "@styles/globals.css";
-import { Suspense } from "react";
+import { Suspense, JSX } from "react";
 import Script from "next/script";
 import { BaseLayout } from "@components/ui/layout";
 import type { AppProps } from "next/app";

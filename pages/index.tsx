@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, JSX } from "react";
 import { getCategorizedEvents, getLatestEvents } from "@lib/helpers";
 import { twoWeeksDefault } from "@lib/dates";
 import { MAX_RESULTS, SEARCH_TERMS_SUBSET } from "@utils/constants";

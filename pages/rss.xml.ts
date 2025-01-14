@@ -1,3 +1,4 @@
+import { FC } from "react";
 import { siteUrl } from "@config/index";
 import { Feed } from "feed";
 import { getCalendarEvents } from "@lib/helpers";
@@ -141,6 +142,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   };
 };
 
-const RssPage: React.FC = () => null;
+const RssPage: FC = () => null;
 
 export default RssPage;

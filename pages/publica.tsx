@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, ChangeEvent } from "react";
 import { useRouter } from "next/router";
 import { captureException } from "@sentry/nextjs";
 import {
@@ -155,9 +155,8 @@ const Publica: NextPage = () => {
     setFormState(createFormState(newForm, true));
   };
 
-  const handleChange = (
-    e: React.ChangeEvent<{ name: string; value: string }>
-  ) => handleFormChange(e.target.name as keyof FormData, e.target.value);
+  const handleChange = (e: ChangeEvent<{ name: string; value: string }>) =>
+    handleFormChange(e.target.name as keyof FormData, e.target.value);
 
   const handleChangeDate = (
     name: keyof Pick<FormData, "startDate" | "endDate">,

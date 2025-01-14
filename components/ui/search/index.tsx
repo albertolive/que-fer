@@ -5,6 +5,7 @@ import {
   useState,
   ChangeEvent,
   KeyboardEvent,
+  JSX,
 } from "react";
 import XIcon from "@heroicons/react/solid/XIcon";
 import SearchIcon from "@heroicons/react/solid/SearchIcon";
@@ -12,16 +13,19 @@ import useStore from "@store";
 import { sendGoogleEvent } from "@utils/analytics";
 import { StoreState } from "@store";
 
+// eslint-disable-next-line no-unused-vars
 type DebouncedFunction<T extends (...args: any[]) => any> = (
+  // eslint-disable-next-line no-unused-vars
   ...args: Parameters<T>
 ) => void;
 
+// eslint-disable-next-line no-unused-vars
 function debounce<T extends (...args: any[]) => any>(
   func: T,
   wait: number,
   immediate: boolean = false
 ): DebouncedFunction<T> {
-  let timeout: NodeJS.Timeout | null = null;
+  let timeout: ReturnType<typeof setTimeout> | null = null;
 
   return function executedFunction(this: any, ...args: Parameters<T>) {
     const context = this;

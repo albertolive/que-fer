@@ -1,4 +1,4 @@
-import { useState, memo, useRef } from "react";
+import { useState, memo, useRef, RefObject } from "react";
 import NextImage from "next/image";
 import dynamic from "next/dynamic";
 import useOnScreen from "@components/hooks/useOnScreen";
@@ -56,7 +56,8 @@ function ImageComponent({
   priority = false,
   alt = title,
 }: ImageComponentProps) {
-  const imgDefaultRef = useRef<HTMLDivElement>(null);
+  const imgDefaultRef = useRef<Element>(null) as RefObject<Element>;
+  const divRef = useRef<HTMLDivElement>(null);
   const isImgDefaultVisible = useOnScreen(imgDefaultRef, {
     freezeOnceVisible: true,
   });
@@ -66,7 +67,7 @@ function ImageComponent({
 
   if (!image || hasError) {
     return (
-      <div className={imageClassName} ref={imgDefaultRef}>
+      <div className={imageClassName} ref={divRef}>
         {isImgDefaultVisible ? (
           <ImgDefault
             date={date}

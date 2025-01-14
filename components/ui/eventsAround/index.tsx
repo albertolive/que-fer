@@ -1,4 +1,4 @@
-import React, { useEffect, useState, FC } from "react";
+import { useEffect, useState, FC } from "react";
 import { captureException } from "@sentry/nextjs";
 import { sendGoogleEvent } from "@utils/analytics";
 import EventsAroundScroll from "@components/ui/eventsAroundScroll";

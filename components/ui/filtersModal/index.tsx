@@ -5,6 +5,7 @@ import {
   useEffect,
   memo,
   ChangeEvent,
+  FC,
 } from "react";
 import dynamic from "next/dynamic";
 import RadioInput from "@components/ui/common/form/radioInput";
@@ -12,6 +13,19 @@ import RangeInput from "@components/ui/common/form/rangeInput";
 import { BYDATES, CATEGORY_NAMES_MAP, DISTANCES } from "@utils/constants";
 import { generateRegionsAndTownsOptions, sendEventToGA } from "@utils/helpers";
 import useStore, { UserLocation, EventCategory } from "@store";
+
+interface GeolocationPosition {
+  coords: {
+    latitude: number;
+    longitude: number;
+    accuracy: number;
+    altitude: number | null;
+    altitudeAccuracy: number | null;
+    heading: number | null;
+    speed: number | null;
+  };
+  timestamp: number;
+}
 
 const Modal = dynamic(() => import("@components/ui/common/modal"), {
   loading: () => <></>,
@@ -36,7 +50,7 @@ interface GeolocationError {
   message: string;
 }
 
-const FiltersModal: React.FC = () => {
+const FiltersModal: FC = () => {
   const {
     openModal,
     place,

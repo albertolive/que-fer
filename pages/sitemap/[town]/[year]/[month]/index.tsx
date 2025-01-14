@@ -1,3 +1,4 @@
+import { JSX } from "react";
 import { GetStaticPaths, GetStaticProps } from "next";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
