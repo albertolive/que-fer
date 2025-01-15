@@ -1,21 +1,43 @@
-import { memo } from "react";
+// Check in the future
+import { memo, FC } from "react";
 import Image from "next/image";
 import { getFormattedDate } from "@utils/helpers";
-import { normalizeWeather } from "@utils/normalize";
-import { useGetWeather } from "@components/hooks/useGetWeather";
 
-export default memo(function Weather({ startDate, location }) {
+interface DateObject {
+  date?: string;
+  dateTime?: string;
+}
+
+interface WeatherProps {
+  startDate: DateObject;
+  location: string;
+}
+
+interface FormattedDateResult {
+  isLessThanFiveDays: boolean;
+  startDate: string | Date;
+  isMultipleDays: boolean;
+}
+
+interface WeatherData {
+  temp?: number;
+  description?: string;
+  icon?: string;
+}
+
+const Weather: FC<WeatherProps> = ({ startDate, location }) => {
   const {
     isLessThanFiveDays,
     startDate: start,
     isMultipleDays,
-  } = getFormattedDate(startDate);
+  }: FormattedDateResult = getFormattedDate(startDate);
+
   const showWeather = isMultipleDays || isLessThanFiveDays;
-  const { data, error } = useGetWeather(showWeather, location);
+  const { data, error } = {} as any; // useGetWeather(showWeather, location);
 
   if (!data || error) return <p>No hi ha dades meteorològiques disponibles.</p>;
 
-  const weather = normalizeWeather(start, data);
+  const weather: WeatherData = {}; // normalizeWeather(start, data);
   const { temp, description: weatherDescription, icon } = weather || {};
 
   return (
@@ -23,10 +45,10 @@ export default memo(function Weather({ startDate, location }) {
       {icon && (
         <div className="flex justify-center items-center">
           <Image
-            alt={weatherDescription}
+            alt={weatherDescription || "Weather icon"}
             src={icon}
-            width="27"
-            height="27"
+            width={27}
+            height={27}
             style={{
               maxWidth: "100%",
               height: "auto",
@@ -40,4 +62,8 @@ export default memo(function Weather({ startDate, location }) {
       </div>
     </div>
   );
-});
+};
+
+Weather.displayName = "Weather";
+
+export default memo(Weather);

@@ -99,5 +99,3 @@ export interface RegionData {
   label: string;
   towns: string[];
 }
-
-export type CitiesData = Map<string, RegionData>;

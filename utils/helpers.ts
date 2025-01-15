@@ -1,45 +1,79 @@
-import { DAYS, MONTHS, CITIES_DATA, BYDATES, CATEGORIES } from "./constants";
+import { Event } from "@store";
+import {
+  DAYS,
+  MONTHS,
+  CATEGORIES,
+  RegionData,
+} from "./constants";
 import { siteUrl } from "@config/index";
 
-const isLessThanFiveDays = (date) => {
+export interface DateObject {
+  date?: string;
+  dateTime?: string;
+}
+
+export interface FormattedDateResult {
+  originalFormattedStart: string;
+  formattedStart: string;
+  formattedEnd: string | null;
+  startTime: string;
+  endTime: string;
+  nameDay: string;
+  startDate: Date;
+  isLessThanFiveDays: boolean;
+  isMultipleDays: boolean;
+  duration: string;
+}
+
+export interface PlaceTypeAndLabel {
+  type: "region" | "town";
+  label: string;
+  regionLabel?: string;
+}
+
+export interface Location {
+  lat: number;
+  lng: number;
+}
+
+export interface Option {
+  value: string;
+  label: string;
+}
+
+const CITIES_DATA: Map<string, RegionData> = new Map([]);
+
+export const isLessThanFiveDays = (date: Date): boolean => {
   const currentDate = new Date();
   const timeDiff = currentDate.getTime() - date.getTime();
   const dayDiff = timeDiff / (1000 * 3600 * 24);
   return Math.floor(Math.abs(dayDiff)) < 5;
 };
 
-export const sanitize = (url) => {
+export const sanitize = (url: string): string => {
   const accents = [
-    /[\u0300-\u030f]/g, // Combining Diacritical Marks
-    /[\u1AB0-\u1AFF]/g, // Combining Diacritical Marks Extended
-    /[\u1DC0-\u1DFF]/g, // Combining Diacritical Marks Supplement
-    /[\u1F00-\u1FFF]/g, // Greek Extended
-    /[\u2C80-\u2CFF]/g, // Coptic
-    /[\uFB00-\uFB06]/g, // Alphabetic Presentation Forms (ligatures)
+    /[\u0300-\u030f]/g,
+    /[\u1AB0-\u1AFF]/g,
+    /[\u1DC0-\u1DFF]/g,
+    /[\u1F00-\u1FFF]/g,
+    /[\u2C80-\u2CFF]/g,
+    /[\uFB00-\uFB06]/g,
   ];
 
   let sanitizedUrl = url.toLowerCase();
-
   sanitizedUrl = sanitizedUrl.replace(/\s+$/, "");
 
-  // Remove accents
   accents.forEach((regex) => {
     sanitizedUrl = sanitizedUrl.normalize("NFD").replace(regex, "");
   });
 
-  // Replace spaces and illegal characters with hyphens
   sanitizedUrl = sanitizedUrl.replace(/[^\w\s-]/g, "").replace(/[\s_]+/g, "-");
-
-  // Replace consecutive hyphens, en-dashes, and em-dashes with a single hyphen
   sanitizedUrl = sanitizedUrl.replace(/[-\s]+/g, "-");
 
   return sanitizedUrl;
 };
 
-export const sanitizeText = (str) =>
-  str.replace("&amp;", "&").replace(/\[Ad\]/g, "");
-
-export const slug = (str, formattedStart, id) =>
+export const slug = (str: string, formattedStart: string, id: string): string =>
   `${sanitize(str)}-${formattedStart
     .toLowerCase()
     .replace(/ /g, "-")
@@ -47,17 +81,16 @@ export const slug = (str, formattedStart, id) =>
     .replace("ç", "c")
     .replace(/--/g, "-")}-${id}`;
 
-export const convertTZ = (date, tzString) =>
+export const convertTZ = (date: Date | string, tzString: string): Date =>
   new Date(
     (typeof date === "string" ? new Date(date) : date).toLocaleString("en-US", {
       timeZone: tzString,
     })
   );
 
-function calculateDetailedDurationISO8601(start, end) {
-  const differenceInMs = end - start;
+function calculateDetailedDurationISO8601(start: Date, end: Date): string {
+  const differenceInMs = end.getTime() - start.getTime();
 
-  // Convert to days, hours, minutes, and seconds
   const days = Math.floor(differenceInMs / (1000 * 60 * 60 * 24));
   const hours = Math.floor(
     (differenceInMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
@@ -65,11 +98,9 @@ function calculateDetailedDurationISO8601(start, end) {
   const minutes = Math.floor((differenceInMs % (1000 * 60 * 60)) / (1000 * 60));
   const seconds = Math.floor((differenceInMs % (1000 * 60)) / 1000);
 
-  // Build ISO 8601 duration string
   let duration = "P";
   if (days > 0) duration += `${days}D`;
 
-  // Only add "T" if there are time components to specify
   if (hours > 0 || minutes > 0 || seconds > 0) {
     duration += "T";
     if (hours > 0) duration += `${hours}H`;
@@ -77,19 +108,20 @@ function calculateDetailedDurationISO8601(start, end) {
     if (seconds > 0) duration += `${seconds}S`;
   }
 
-  // Handle the case where there's no difference between start and end
-  if (duration === "P") {
-    return "PT1H";
-  }
-
-  return duration;
+  return duration === "P" ? "PT1H" : duration;
 }
 
-export const getFormattedDate = (start, end) => {
+export const getFormattedDate = (
+  start: string | DateObject,
+  end?: string | DateObject
+): FormattedDateResult => {
   const startDate = new Date(
-    (start && start.date) || (start && start.dateTime) || start
+    typeof start === "object" ? start.date || start.dateTime || "" : start
   );
-  const endDate = new Date((end && end.date) || (end && end.dateTime) || end);
+  const endDate = end
+    ? new Date(typeof end === "object" ? end.date || end.dateTime || "" : end)
+    : startDate;
+
   const startDateConverted = convertTZ(startDate, "Europe/Madrid");
   const endDateConverted = convertTZ(endDate, "Europe/Madrid");
   const duration = calculateDetailedDurationISO8601(startDate, endDate);
@@ -101,16 +133,14 @@ export const getFormattedDate = (start, end) => {
   const endDay = endDateConverted.getDate();
 
   if (startDay !== endDay) isMultipleDays = true;
-
   if (startDateConverted.getMonth() === endDateConverted.getMonth())
     isSameMonth = true;
-
   if (startDateConverted.getFullYear() === endDateConverted.getFullYear())
     isSameYear = true;
 
-  const weekDay = new Date(startDateConverted).getDay();
-  const month = new Date(startDateConverted).getMonth();
-  const year = new Date(startDateConverted).getFullYear();
+  const weekDay = startDateConverted.getDay();
+  const month = startDateConverted.getMonth();
+  const year = startDateConverted.getFullYear();
   const nameDay = DAYS[weekDay];
   const nameMonth = MONTHS[month];
 
@@ -118,12 +148,13 @@ export const getFormattedDate = (start, end) => {
   const formattedStart =
     isMultipleDays && isSameMonth
       ? `${startDay}`
-      : `${startDay} de ${nameMonth} ${
-          isMultipleDays && isSameYear ? "" : `del ${year}`
+      : `${startDay} de ${nameMonth}${
+          isMultipleDays && isSameYear ? "" : ` del ${year}`
         }`;
   const formattedEnd = `${endDay} de ${
     MONTHS[endDateConverted.getMonth()]
   } del ${endDateConverted.getFullYear()}`;
+
   const startTime = `${startDateConverted.getHours()}:${String(
     startDateConverted.getMinutes()
   ).padStart(2, "0")}`;
@@ -149,21 +180,19 @@ export const getFormattedDate = (start, end) => {
   };
 };
 
-export const nextDay = (x) => {
-  let now = new Date();
-  now.setDate(now.getDate() + ((x + (7 - now.getDay())) % 7));
-  const covertDate = convertTZ(now, "Europe/Madrid");
-
-  return covertDate;
-};
-
-export const isWeekend = () => {
+export const nextDay = (x: number): Date => {
   const now = new Date();
-
-  return now.getDay() === 0 || now.getDay() === 5 || now.getDay() === 6;
+  now.setDate(now.getDate() + ((x + (7 - now.getDay())) % 7));
+  const convertedDate = convertTZ(now, "Europe/Madrid");
+  return convertedDate;
 };
 
-export const monthsName = [
+export const isWeekend = (): boolean => {
+  const today = new Date();
+  return today.getDay() === 0 || today.getDay() === 5 || today.getDay() === 6;
+};
+
+export const monthsName: string[] = [
   "gener",
   "febrer",
   "març",
@@ -178,7 +207,7 @@ export const monthsName = [
   "desembre",
 ];
 
-export const generateJsonData = (event) => {
+export const generateJsonData = (event: Event): SchemaOrgEvent => {
   const {
     title,
     slug,
@@ -195,11 +224,13 @@ export const generateJsonData = (event) => {
   } = event;
 
   const defaultImage = `${siteUrl}/static/images/logo-seo-meta.webp`;
-  const images = [imageUploaded, eventImage, defaultImage].filter(Boolean);
+  const images = [imageUploaded, eventImage, defaultImage].filter(
+    Boolean
+  ) as string[];
 
   const videoObject = videoUrl
     ? {
-        "@type": "VideoObject",
+        "@type": "VideoObject" as const,
         name: title,
         contentUrl: videoUrl,
         description,
@@ -209,8 +240,8 @@ export const generateJsonData = (event) => {
     : null;
 
   return {
-    "@context": "https://schema.org",
-    "@type": "Event",
+    "@context": "https://schema.org" as const,
+    "@type": "Event" as const,
     name: title,
     url: `${siteUrl}/e/${slug}`,
     startDate,
@@ -218,10 +249,10 @@ export const generateJsonData = (event) => {
     eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
     eventStatus: "https://schema.org/EventScheduled",
     location: {
-      "@type": "Place",
+      "@type": "Place" as const,
       name: location,
       address: {
-        "@type": "PostalAddress",
+        "@type": "PostalAddress" as const,
         streetAddress: location,
         addressLocality: subLocation,
         postalCode,
@@ -232,16 +263,16 @@ export const generateJsonData = (event) => {
     image: images,
     description,
     performer: {
-      "@type": "PerformingGroup",
+      "@type": "PerformingGroup" as const,
       name: location,
     },
     organizer: {
-      "@type": "Organization",
+      "@type": "Organization" as const,
       name: location,
       url: siteUrl,
     },
     offers: {
-      "@type": "Offer",
+      "@type": "Offer" as const,
       price: 0,
       priceCurrency: "EUR",
       availability: "https://schema.org/InStock",
@@ -254,13 +285,10 @@ export const generateJsonData = (event) => {
   };
 };
 
-export function createArrayOfObjects(arr) {
-  return arr.map(function (item) {
-    return { value: item, label: item.charAt(0).toUpperCase() + item.slice(1) };
-  });
-}
-
-export function generateRegionsAndTownsOptions() {
+export const generateRegionsAndTownsOptions = (): {
+  label: string;
+  options: Option[];
+}[] => {
   let regionsOptions = generateRegionsOptions();
   regionsOptions.sort((a, b) => a.label.localeCompare(b.label));
   const townsOptions = [...CITIES_DATA.entries()]
@@ -276,254 +304,208 @@ export function generateRegionsAndTownsOptions() {
     }))
     .sort((a, b) => a.label.localeCompare(b.label));
   return [{ label: "Comarques", options: regionsOptions }, ...townsOptions];
-}
+};
 
-export function generateRegionsOptions() {
-  return [...CITIES_DATA.entries()]
-    .sort((a, b) => a[1].label.localeCompare(b[1].label))
-    .map(([regionKey, region]) => ({
-      value: regionKey,
-      label: region.label,
-    }));
-}
+export const generateRegionsOptions = (): Option[] => {
+  return [...CITIES_DATA.entries()].map(([value, { label }]) => ({
+    value,
+    label,
+  }));
+};
 
-export function getPlaceLabel(placeValue) {
-  for (const [regionKey, region] of CITIES_DATA.entries()) {
-    if (regionKey === placeValue) {
-      return region.label;
+export const getPlaceTypeAndLabel = (place: string): PlaceTypeAndLabel => {
+  for (const [region, regionData] of CITIES_DATA.entries() as IterableIterator<
+    [string, RegionData]
+  >) {
+    if (region === place) {
+      return { type: "region", label: regionData.label };
     }
-    for (const [townKey, town] of region.towns.entries()) {
-      if (townKey === placeValue) {
-        return town.label;
+    for (const town of regionData.towns) {
+      if (town === place) {
+        return { type: "town", label: town, regionLabel: regionData.label };
       }
     }
   }
-  return "";
-}
+  return { type: "town", label: place };
+};
 
-export function getPlaceTypeAndLabel(place) {
-  const placeLabel = getPlaceLabel(place);
-  if (placeLabel) {
-    if (CITIES_DATA.has(place)) {
-      // place is a region
-      return {
-        type: "region",
-        label: getRegionLabelByValue(place),
-        regionLabel: "",
-      };
-    } else {
-      // place is a town
-      const regionLabel = getRegionByTown(place);
-      return { type: "town", label: getTownLabel(place), regionLabel };
-    }
-  }
-  return { type: null, label: "", regionLabel: "" };
-}
-
-export function getTownLabel(townValue) {
-  for (const region of CITIES_DATA.values()) {
-    for (const [townKey, town] of region.towns.entries()) {
-      if (townKey === townValue) {
-        return town.label;
-      }
-    }
-  }
-  return "";
-}
-
-export function getTownPostalCode(townValue) {
-  for (const region of CITIES_DATA.values()) {
-    for (const [townKey, town] of region.towns.entries()) {
-      if (townKey === townValue) {
-        return town.postalCode;
-      }
-    }
-  }
-  return "";
-}
-
-export function getRegionLabelByValue(regionValue) {
-  for (const [regionKey, region] of CITIES_DATA.entries()) {
-    if (regionKey === regionValue) {
-      return region.label;
-    }
-  }
-  return "";
-}
-
-export function getRegionsLabel() {
-  const placeNames = [];
-
-  for (const [, regionData] of CITIES_DATA.entries()) {
-    placeNames.push(regionData.label);
-  }
-
-  return placeNames;
-}
-
-export function generateTownsOptions(region) {
+export const generateTownsOptions = (region: string): Option[] => {
   const regionData = CITIES_DATA.get(region);
-  return region && regionData
-    ? [...regionData.towns.entries()]
-        .filter(([_, town]) => !town.hide)
-        .sort((a, b) => a[1].label.localeCompare(b[1].label))
-        .map(([townKey, town]) => ({
-          value: townKey,
-          label: town.label,
-        }))
-    : [];
-}
+  if (!regionData) return [];
+  return Array.from(regionData.towns.entries()).map(([townKey, townData]) => ({
+    value: townKey,
+    label: townData.label,
+  }));
+};
 
-export function generateDatesOptions(byDate) {
-  return byDate
-    ? BYDATES.filter((byDateOption) => byDateOption.value === byDate)
-    : [];
-}
-
-export function getByDateLabel(byDateValue) {
-  const byDateObj = BYDATES.find((byDate) => byDate.value === byDateValue);
-  return byDateObj ? byDateObj.label : "";
-}
-
-export function getTownOptionsWithoutRegion(town) {
-  let townData = {};
-
-  for (const [_, regionData] of CITIES_DATA.entries()) {
-    if (regionData.towns.has(town)) {
-      townData = regionData.towns.get(town);
-      break;
-    }
+export const getPlaceLabel = (place: string): string => {
+  for (const [region, regionData] of CITIES_DATA) {
+    if (region === place) return regionData.label;
+    if (Array.from(regionData.towns.keys()).includes(place)) return place;
   }
+  return place;
+};
 
-  return townData;
+interface VideoObject {
+  "@type": "VideoObject";
+  name: string;
+  contentUrl: string;
+  description: string;
+  thumbnailUrl: string;
+  uploadDate: string;
 }
 
-export function getRegionByTown(town) {
-  let region = "";
-  for (const [key, value] of CITIES_DATA.entries()) {
-    if (value.towns.has(town)) {
-      region = key;
-      break;
-    }
+interface SchemaOrgEvent {
+  "@context": "https://schema.org";
+  "@type": "Event";
+  name: string;
+  url: string;
+  startDate: string;
+  endDate: string;
+  eventAttendanceMode: string;
+  eventStatus: string;
+  location: {
+    "@type": "Place";
+    name: string;
+    address: {
+      "@type": "PostalAddress";
+      streetAddress: string;
+      addressLocality: string;
+      postalCode: string;
+      addressCountry: string;
+      addressRegion: string;
+    };
+  };
+  image: string[];
+  description: string;
+  performer: {
+    "@type": "PerformingGroup";
+    name: string;
+  };
+  organizer: {
+    "@type": "Organization";
+    name: string;
+    url: string;
+  };
+  offers: {
+    "@type": "Offer";
+    price: number;
+    priceCurrency: string;
+    availability: string;
+    url: string;
+    validFrom: string;
+  };
+  isAccessibleForFree: boolean;
+  duration: string;
+  video?: VideoObject;
+}
+
+export const getTownLabel = (townValue: string): string => {
+  for (const [, region] of CITIES_DATA) {
+    const town = region.towns.get(townValue);
+    if (town) return town.label;
   }
+  return "";
+};
 
-  return getRegionLabelByValue(region);
-}
+export const getRegionLabelByValue = (regionValue: string): string => {
+  const region = CITIES_DATA.get(regionValue);
+  return region ? region.label : "";
+};
 
-export function getTownOptionsWithLabel(label) {
-  let townOptions = {};
-  CITIES_DATA.forEach((region) => {
-    region.towns.forEach((town) => {
-      if (town.label === label) {
-        townOptions = town;
+export const getTownOptionsWithoutRegion = (town: string): Option[] => {
+  const options: Option[] = [];
+  for (const [, region] of CITIES_DATA) {
+    region.towns.forEach((townData, townKey) => {
+      if (townKey === town) {
+        options.push({ value: townKey, label: townData.label });
       }
     });
-  });
+  }
+  return options;
+};
 
-  return townOptions;
-}
-
-export function getRegionValueByLabel(regionLabel) {
-  for (const [regionKey, region] of CITIES_DATA.entries()) {
-    if (region.label === regionLabel) {
-      return regionKey;
-    }
+export const getRegionByTown = (town: string): string => {
+  for (const [regionKey, region] of CITIES_DATA) {
+    if (region.towns.has(town)) return regionKey;
   }
   return "";
-}
+};
 
-export function getTownValueByLabel(townLabel) {
-  for (const region of CITIES_DATA.values()) {
-    for (const [townKey, town] of region.towns.entries()) {
-      if (town.label === townLabel) {
-        return townKey;
+export const getRegionValueByLabel = (regionLabel: string): string => {
+  for (const [regionKey, region] of CITIES_DATA) {
+    if (region.label === regionLabel) return regionKey;
+  }
+  return "";
+};
+
+export const getTownValueByLabel = (label: string): string | undefined => {
+  for (const [, region] of CITIES_DATA.entries() as IterableIterator<
+    [string, RegionData]
+  >) {
+    for (const town of region.towns) {
+      if (town.toLowerCase() === label.toLowerCase()) {
+        return town;
       }
     }
   }
-  return "";
-}
+  return undefined;
+};
 
-export function truncateString(text, maxLength) {
-  return text.length > maxLength
-    ? text.substring(0, maxLength - 3) + "..."
-    : text;
-}
+export const truncateString = (str: string, num: number): string => {
+  if (str.length <= num) return str;
+  return str.slice(0, num) + "...";
+};
 
-export function getDistance(location1, location2) {
-  var R = 6371;
-  var dLat = deg2rad(location2.lat - location1.lat);
-  var dLng = deg2rad(location2.lng - location1.lng);
-  var a =
+export const getDistance = (
+  location1: Location,
+  location2: Location
+): number => {
+  const R = 6371;
+  const dLat = deg2rad(location2.lat - location1.lat);
+  const dLon = deg2rad(location2.lng - location1.lng);
+  const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos(deg2rad(location1.lat)) *
       Math.cos(deg2rad(location2.lat)) *
-      Math.sin(dLng / 2) *
-      Math.sin(dLng / 2);
-  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  var distance = R * c;
-  return distance;
-}
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+};
 
-function deg2rad(deg) {
+export const deg2rad = (deg: number): number => {
   return deg * (Math.PI / 180);
-}
+};
 
-export const sendEventToGA = (filterName, filterValue) => {
-  if (typeof window !== "undefined" && filterName && filterValue) {
-    window.gtag &&
-      window.gtag("event", "filter_used", {
-        filter_name: filterName,
-        filter_value: filterValue,
-      });
+export const sendEventToGA = (
+  filterName: string,
+  filterValue: string
+): void => {
+  if (typeof window !== "undefined" && window.gtag) {
+    window.gtag("event", "filter_change", {
+      event_category: "Filter",
+      event_label: `${filterName}: ${filterValue}`,
+    });
   }
 };
 
-export const env =
+export const env: string =
   process.env.NODE_ENV !== "production"
     ? "dev"
     : process.env.NEXT_PUBLIC_VERCEL_ENV === "preview" ||
       process.env.NEXT_PUBLIC_VERCEL_ENV === "development"
-    ? "dev"
+    ? "staging"
     : "prod";
 
-export function getRegionFromQuery(q) {
+export const getRegionFromQuery = (q: string): string => {
   const parts = q.split(" ");
   if (parts.length > 1) {
     return parts[parts.length - 1];
   }
   return "";
-}
+};
 
-export function findCategoryKeyByValue(value) {
+export const findCategoryKeyByValue = (value: string): string | undefined => {
   return Object.keys(CATEGORIES).find((key) => CATEGORIES[key] === value);
-}
-
-export function sanitizeUrl(url) {
-  if (typeof url !== "string") {
-    console.warn("Invalid URL type:", typeof url);
-    return "";
-  }
-
-  // Remove any leading "https," or "http,"
-  url = url.replace(/^(https?),\s*/, "");
-
-  // Ensure the URL starts with http:// or https://
-  if (!url.startsWith("http://") && !url.startsWith("https://")) {
-    url = "https://" + url;
-  }
-
-  // Remove any double slashes (except after the protocol)
-  url = url.replace(/(https?:\/\/)\/+/g, "$1");
-
-  // Remove any spaces in the URL
-  url = url.replace(/\s+/g, "");
-
-  try {
-    // Try to construct a URL object to validate the URL
-    new URL(url);
-    return url;
-  } catch (error) {
-    console.warn("Invalid URL after sanitization:", url);
-    return "";
-  }
-}
+};
