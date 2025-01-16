@@ -1,7 +1,6 @@
 import axios, { AxiosResponse } from "axios";
 import { captureException } from "@sentry/nextjs";
 import { env, getFormattedDate, slug } from "@utils/helpers";
-import { getAuthToken } from "@lib/auth";
 import { siteUrl } from "@config/index";
 
 interface GoogleCalendarEvent {
@@ -33,12 +32,12 @@ interface IndexEventParams {
   id: string;
 }
 
-export async function postToGoogleCalendar(
+export async function postEvent(
   event: GoogleCalendarEvent,
   authToken?: string
 ): Promise<AxiosResponse> {
   try {
-    const token = authToken || (await getAuthToken());
+    const token = authToken;
 
     const response = await axios.post<GoogleCalendarEvent>(
       `https://www.googleapis.com/calendar/v3/calendars/${process.env.NEXT_PUBLIC_GOOGLE_CALENDAR}@group.calendar.google.com/events`,
@@ -50,24 +49,6 @@ export async function postToGoogleCalendar(
         },
       }
     );
-
-    if (env === "prod" && response.data.id) {
-      try {
-        await indexEvent({
-          start: response.data.start,
-          end: response.data.end,
-          summary: response.data.summary,
-          id: response.data.id
-        });
-      } catch (err) {
-        console.error(`Error occurred while indexing event: ${err instanceof Error ? err.message : String(err)}`);
-        captureException(err, {
-          extra: {
-            context: 'indexing event after Google Calendar post'
-          }
-        });
-      }
-    }
 
     return response;
   } catch (error) {
@@ -82,7 +63,7 @@ export async function postToGoogleCalendar(
   }
 }
 
-export async function updateGoogleCalendarEvent(
+export async function updateEvent(
   event: GoogleCalendarEvent
 ): Promise<AxiosResponse> {
   try {
@@ -100,19 +81,6 @@ export async function updateGoogleCalendarEvent(
       }
     );
 
-    if (env === "prod") {
-      try {
-        // await indexEvent(event);
-      } catch (err) {
-        console.error(`Error occurred while indexing event: ${err instanceof Error ? err.message : String(err)}`);
-        captureException(err, {
-          extra: {
-            context: 'indexing event after Google Calendar update'
-          }
-        });
-      }
-    }
-
     return response;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -126,29 +94,53 @@ export async function updateGoogleCalendarEvent(
   }
 }
 
-export async function indexEvent({ start, end, summary, id }: IndexEventParams): Promise<void> {
+interface Region {
+  id: number;
+  name: string;
+  slug: string;
+}
+
+interface RegionsResponse {
+  regions: Region[];
+}
+
+export async function getRegions(): Promise<{ [key: string]: Region }> {
   try {
-    // Get the originalFormattedStart value
-    const { formattedStart: originalFormattedStart } = getFormattedDate(start, end);
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/regions`, {
+      next: {
+        revalidate: 60 * 60, // 1 hour
+      },
+    });
 
-    // Construct the URL using the slug function
-    const eventUrl = `${siteUrl}/e/${slug(
-      summary,
-      originalFormattedStart,
-      id
-    )}`;
+    if (!response.ok) {
+      const message = `API Error: ${response.status} ${response.statusText}`;
+      console.error(message);
+      captureException(new Error(message), {
+        extra: {
+          context: 'fetching regions',
+          status: response.status,
+          statusText: response.statusText
+        }
+      });
+      throw new Error(message);
+    }
 
-    // Call the new function to index the event to Google Search
-    await axios.post(`${siteUrl}/api/indexEvent`, { url: eventUrl });
-  } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : String(err);
-    console.error(`Error occurred while indexing event ${id}: ${errorMessage}`);
-    captureException(err, {
+    const data = (await response.json()) as RegionsResponse;
+
+    const regionsMap: { [key: string]: Region } = {};
+    data.regions.forEach((region) => {
+      regionsMap[region.slug] = region;
+    });
+
+    return regionsMap;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error(`Error occurred while fetching regions: ${errorMessage}`);
+    captureException(error, {
       extra: {
-        context: 'indexing event',
-        eventId: id
+        context: 'fetching regions'
       }
     });
-    throw new Error(`Error occurred while indexing event ${id}: ${errorMessage}`);
+    return {};
   }
 }

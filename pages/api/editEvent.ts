@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { captureException } from "@sentry/nextjs";
-import { updateGoogleCalendarEvent } from "@lib/apiHelpers";
+import { updateEvent } from "@lib/apiHelpers";
 
 interface EventRequest {
   id: string;
@@ -87,7 +87,7 @@ const handler = async (
     };
 
     try {
-      const { data } = await updateGoogleCalendarEvent(event);
+      const { data } = await updateEvent(event);
       return res.status(200).json({ data });
     } catch (error) {
       console.error("Error updating Google Calendar event:", error);

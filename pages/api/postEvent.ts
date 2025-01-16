@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { captureException } from "@sentry/nextjs";
-import { postToGoogleCalendar } from "@lib/apiHelpers";
+import { postEvent } from "@lib/apiHelpers";
 
 interface EventRequest {
   title: string;
@@ -84,7 +84,7 @@ export default async function handler(
     };
 
     try {
-      const { data } = await postToGoogleCalendar(event);
+      const { data } = await postEvent(event);
       console.log("Inserted new item successfully: " + title);
       res.status(200).json(data);
     } catch (error) {

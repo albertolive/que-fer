@@ -15,7 +15,7 @@ const fetchWithId = async ([url, id]: [string | null, string]): Promise<Event> =
     throw new Error(`HTTP error! status: ${response.status}`);
   }
   const data = await response.json();
-  return data;
+  return { event: data };
 };
 
 export const useGetEvent = (props: EventProps) => {
@@ -24,7 +24,7 @@ export const useGetEvent = (props: EventProps) => {
   preload([eventId ? `/api/getEvent` : null, eventId], fetchWithId);
 
   return useSWR<Event>([eventId ? `/api/getEvent` : null, eventId], fetchWithId, {
-    fallbackData: props.event,
+    fallbackData: props,
     refreshInterval: 300000,
     revalidateOnFocus: true,
     revalidateOnReconnect: true,

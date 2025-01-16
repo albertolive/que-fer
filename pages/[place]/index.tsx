@@ -1,11 +1,29 @@
-import { useEffect } from "react";
+import { useEffect, JSX } from "react";
+import { GetStaticPaths, GetStaticProps } from "next";
 import { getCalendarEvents } from "@lib/helpers";
 import { getPlaceTypeAndLabel } from "@utils/helpers";
 import { twoWeeksDefault } from "@lib/dates";
 import Events from "@components/ui/events";
 import { initializeStore } from "@utils/initializeStore";
+import { getRegions } from "@lib/apiHelpers";
 
-export default function Place({ initialState }) {
+interface InitialState {
+  place: string;
+  events: any[]; // Replace with proper Event interface from your types
+  noEventsFound: boolean;
+  hasServerFilters: boolean;
+}
+
+interface PlaceProps {
+  initialState: InitialState;
+}
+
+interface StaticPathParams {
+  place: string;
+  [key: string]: string | string[] | undefined;
+}
+
+export default function Place({ initialState }: PlaceProps): JSX.Element {
   useEffect(() => {
     initializeStore(initialState);
   }, [initialState]);
@@ -18,34 +36,36 @@ export default function Place({ initialState }) {
   );
 }
 
-export async function getStaticPaths() {
-  const { CITIES_DATA } = require("@utils/constants");
+export const getStaticPaths: GetStaticPaths<StaticPathParams> = async () => {
+  const paths: Array<{ params: StaticPathParams }> = [];
 
-  const paths = [];
+  const regions = await getRegions();
 
-  for (const [regionKey, region] of CITIES_DATA) {
+  for (const regionSlug of Object.keys(regions)) {
+    const region = regions[regionSlug];
     paths.push({
       params: {
-        place: regionKey,
+        place: region.slug,
       },
     });
-
-    for (const [townKey] of region.towns) {
-      paths.push({
-        params: {
-          place: townKey,
-        },
-      });
-    }
   }
 
   return { paths, fallback: false };
-}
+};
 
-export async function getStaticProps({ params }) {
+export const getStaticProps: GetStaticProps<
+  PlaceProps,
+  StaticPathParams
+> = async ({ params }) => {
+  if (!params) {
+    return {
+      notFound: true,
+    };
+  }
+
   const { from, until } = twoWeeksDefault();
   const { place } = params;
-  const { type, label, regionLabel } = getPlaceTypeAndLabel(place);
+  const { type, label, regionLabel } = await getPlaceTypeAndLabel(place);
   let { events } = await getCalendarEvents({
     from,
     until,
@@ -68,7 +88,7 @@ export async function getStaticProps({ params }) {
     events = nextEventsResult.events;
   }
 
-  const initialState = {
+  const initialState: InitialState = {
     place,
     events,
     noEventsFound,
@@ -81,4 +101,4 @@ export async function getStaticProps({ params }) {
     },
     revalidate: 60,
   };
-}
+};

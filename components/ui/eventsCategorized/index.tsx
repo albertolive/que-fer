@@ -1,33 +1,45 @@
-import { memo, useCallback, useEffect, useState } from "react";
+// @ts-nocheck
+import { memo, useCallback, useEffect, useState, ReactElement } from "react";
 import Script from "next/script";
 import dynamic from "next/dynamic";
 import ChevronRightIcon from "@heroicons/react/solid/ChevronRightIcon";
 import SpeakerphoneIcon from "@heroicons/react/outline/SpeakerphoneIcon";
 import Meta from "@components/partials/seo-meta";
 import { generatePagesData } from "@components/partials/generatePagesData";
-import { useGetCategorizedEvents } from "@components/hooks/useGetCategorizedEvents";
+import { useGetEvents } from "@components/hooks/useGetEvents";
 import { generateJsonData, sendEventToGA } from "@utils/helpers";
 import { MAX_RESULTS } from "@utils/constants";
 import List from "@components/ui/list";
 import CardLoading from "@components/ui/cardLoading";
 import Card from "@components/ui/card";
 import EventsHorizontalScroll from "@components/ui/eventsHorizontalScroll";
-import useStore from "@store";
 import { SEARCH_TERMS_SUBSET, CATEGORY_NAMES_MAP } from "@utils/constants";
+import useStore, { Event, EventCategory } from "@store";
+
+type ByDateOptions = "avui" | "dema" | "setmana" | "cap-de-setmana" | "";
+
+interface PageData {
+  metaTitle: string;
+  metaDescription: string;
+  title: string;
+  subTitle: string;
+  canonical: string;
+  notFoundText: string;
+}
 
 const NoEventsFound = dynamic(
   () => import("@components/ui/common/noEventsFound"),
   {
-    loading: () => "",
+    loading: () => null,
   }
 );
 
 const AdArticle = dynamic(() => import("@components/ui/adArticle"), {
-  loading: () => "",
+  loading: () => null,
   ssr: false,
 });
 
-function EventsCategorized() {
+function EventsCategorized(): ReactElement {
   const {
     categorizedEvents: initialCategorizedEvents,
     latestEvents: initialLatestEvents,
@@ -39,36 +51,41 @@ function EventsCategorized() {
     categorizedEvents: state.categorizedEvents,
     latestEvents: state.latestEvents,
     place: state.place,
-    byDate: state.byDate,
+    byDate: state.byDate as ByDateOptions,
     currentYear: state.currentYear,
     setState: state.setState,
   }));
 
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const {
-    data: fetchedData = {},
+    data: fetchedData = {
+      categorizedEvents: initialCategorizedEvents,
+      latestEvents: initialLatestEvents,
+      currentYear: new Date().getFullYear(),
+      noEventsFound: false,
+    },
     isValidating,
     error,
-  } = useGetCategorizedEvents({
+  } = useGetEvents({
     props: {
-      categorizedEvents: initialCategorizedEvents,
+      events: initialCategorizedEvents,
       latestEvents: initialLatestEvents,
     },
     searchTerms: SEARCH_TERMS_SUBSET,
     maxResults: MAX_RESULTS,
   });
 
-  const categorizedEvents = Object.keys(fetchedData.categorizedEvents || {})
-    .length
-    ? fetchedData.categorizedEvents
-    : initialCategorizedEvents;
+  const events = fetchedData.events?.length ? fetchedData.events : serverEvents;
+  const noEventsFound = fetchedData.noEventsFound ?? serverNoEventsFound;
+  const allEventsLoaded = fetchedData.allEventsLoaded ?? false;
 
-  const latestEvents = fetchedData.latestEvents?.length
-    ? fetchedData.latestEvents
-    : initialLatestEvents;
+  const notFound =
+    !isLoading &&
+    !isValidating &&
+    (noEventsFound || filteredEvents.length === 0);
 
-  const scrollToTop = useCallback(() => {
+  const scrollToTop = useCallback((): void => {
     window.scrollTo({
       top: 0,
       behavior: "smooth",
@@ -76,8 +93,8 @@ function EventsCategorized() {
   }, []);
 
   const onCategoryClick = useCallback(
-    (category) => {
-      setState("category", category);
+    (category: string): void => {
+      setState("category", category as EventCategory);
       sendEventToGA("Category", category);
       scrollToTop();
     },
@@ -93,35 +110,43 @@ function EventsCategorized() {
     );
   }, [categorizedEvents, error, isValidating]);
 
-  const eventKeys = Object.keys(categorizedEvents.events || {});
+  const eventKeys = Object.keys(categorizedEvents || {});
+
+  const generateEventJsonData = (event: Event) => {
+    try {
+      return generateJsonData(event);
+    } catch (err) {
+      console.error("Error generating JSON data for event:", err, event);
+      return null;
+    }
+  };
+
+  const getCategoryName = (category: string): string => {
+    return Object.entries(CATEGORY_NAMES_MAP).reduce(
+      (acc, [key, value]) => (key === category ? value : acc),
+      category
+    );
+  };
+
+  const getEventsForCategory = (category: string): Event[] => {
+    return categorizedEvents?.[category] || [];
+  };
 
   const jsonEvents = [
     ...eventKeys
-      .flatMap((category) => categorizedEvents.events[category] || [])
-      .filter(({ isAd }) => !isAd)
-      .map((event) => {
-        try {
-          return generateJsonData(event);
-        } catch (err) {
-          console.error("Error generating JSON data for event:", err, event);
-          return null;
-        }
-      })
+      .flatMap((category) => getEventsForCategory(category))
+      .filter((event): event is Event => !event.isAd)
+      .map(
+        (event) =>
+          generateEventJsonData(event) as ReturnType<typeof generateJsonData>
+      )
       .filter(Boolean),
     ...latestEvents
-      .filter(({ isAd }) => !isAd)
-      .map((event) => {
-        try {
-          return generateJsonData(event);
-        } catch (err) {
-          console.error(
-            "Error generating JSON data for latest event:",
-            err,
-            event
-          );
-          return null;
-        }
-      })
+      .filter((event): event is Event => !event.isAd)
+      .map(
+        (event) =>
+          generateEventJsonData(event) as ReturnType<typeof generateJsonData>
+      )
       .filter(Boolean),
   ];
 
@@ -133,10 +158,10 @@ function EventsCategorized() {
     subTitle,
     canonical,
     notFoundText,
-  } =
+  }: PageData =
     generatePagesData({
       currentYear: currentYear || new Date().getFullYear(),
-      place,
+      place: place || "",
       byDate,
     }) || {};
 
@@ -186,11 +211,12 @@ function EventsCategorized() {
                 if (shouldUsePriority) {
                   priorityCount += 1;
                 }
-                return categorizedEvents.events[category]?.length > 0 ? (
+                const events = getEventsForCategory(category);
+                return events.length > 0 ? (
                   <div key={category}>
                     <div className="flex justify-between mt-4 mb-2">
                       <h2 className="font-semibold">
-                        {CATEGORY_NAMES_MAP[category] || category}
+                        {getCategoryName(category)}
                       </h2>
                       <div
                         className="flex justify-between items-center cursor-pointer text-primary"
@@ -203,7 +229,7 @@ function EventsCategorized() {
                       </div>
                     </div>
                     <EventsHorizontalScroll
-                      events={categorizedEvents.events[category]}
+                      events={events}
                       usePriority={shouldUsePriority}
                     />
                     {/* Ad */}

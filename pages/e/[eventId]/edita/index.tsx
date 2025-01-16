@@ -13,24 +13,31 @@ import Meta from "@components/partials/seo-meta";
 import { Notification } from "@components/ui/common";
 import { generateRegionsOptions, generateTownsOptions } from "@utils/helpers";
 import { siteUrl } from "@config/index";
+import type {
+  FormState,
+  FormData,
+  SelectOption,
+  EditEventProps,
+} from "./types";
+import { ChangeEvent } from "react";
 
 const _createFormState = (
   isDisabled = true,
   isPristine = true,
   message = ""
-) => ({
+): FormState => ({
   isDisabled,
   isPristine,
   message,
 });
 
-const defaultForm = {
+const defaultForm: FormData = {
   title: "",
   description: "",
   startDate: "",
   endDate: "",
-  region: "",
-  town: "",
+  region: null,
+  town: null,
   location: "",
   imageUploaded: null,
   eventUrl: "",
@@ -110,7 +117,7 @@ const createFormState = (
   return _createFormState(false);
 };
 
-export default function Edita({ event }) {
+const Edita: React.FC<EditEventProps> = ({ event }) => {
   const router = useRouter();
   const [form, setForm] = useState(defaultForm);
   const [region, setRegion] = useState(event.region.value);
@@ -393,34 +400,35 @@ export default function Edita({ event }) {
       </div>
     </>
   );
-}
+};
 
-export async function getServerSideProps({ params }) {
-  const { getCalendarEvent } = require("@lib/helpers");
-  const {
-    getRegionValueByLabel,
-    getTownValueByLabel,
-  } = require("@utils/helpers");
-  const eventId = params.eventId;
+export async function getServerSideProps({
+  params,
+}: {
+  params: { eventId: string };
+}) {
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/events/${params.eventId}`
+    );
+    const event = await res.json();
 
-  const { event } = await getCalendarEvent(eventId);
+    if (!event) {
+      return {
+        notFound: true,
+      };
+    }
 
-  if (!event.id) {
+    return {
+      props: {
+        event,
+      },
+    };
+  } catch (error) {
     return {
       notFound: true,
     };
   }
-
-  event.region = {
-    value: getRegionValueByLabel(event.region),
-    label: event.region,
-  };
-  event.town = {
-    value: getTownValueByLabel(event.town),
-    label: event.town,
-  };
-
-  return {
-    props: { event },
-  };
 }
+
+export default Edita;

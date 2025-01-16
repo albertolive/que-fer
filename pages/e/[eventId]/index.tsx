@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, JSX, RefObject } from "react";
 import dynamic from "next/dynamic";
 import Script from "next/script";
 import { useRouter } from "next/router";
@@ -24,9 +24,18 @@ import { siteUrl } from "@config/index";
 import { sendGoogleEvent } from "@utils/analytics";
 import useCheckMobileScreen from "@components/hooks/useCheckMobileScreen";
 import AddToCalendar from "@components/ui/addToCalendar";
+import type {
+  EventProps,
+  EventData,
+  QueryParams,
+  EventRefs,
+  DynamicOptionsLoadingProps,
+  DeleteReason,
+} from "./types";
+import type { Event as EventType } from "@store";
 
 const AdArticle = dynamic(() => import("@components/ui/adArticle"), {
-  loading: () => "",
+  loading: () => null,
   ssr: false,
 });
 
@@ -39,19 +48,19 @@ const Image = dynamic(() => import("@components/ui/common/image"), {
 });
 
 const EditModal = dynamic(() => import("@components/ui/editModal"), {
-  loading: () => "",
+  loading: () => null,
   ssr: false,
 });
 
 const Maps = dynamic(() => import("@components/ui/maps"), {
-  loading: () => "",
+  loading: () => null,
   ssr: false,
 });
 
 const NoEventFound = dynamic(
   () => import("@components/ui/common/noEventFound"),
   {
-    loading: () => "",
+    loading: () => null,
     ssr: false,
   }
 );
@@ -59,50 +68,50 @@ const NoEventFound = dynamic(
 const Notification = dynamic(
   () => import("@components/ui/common/notification"),
   {
-    loading: () => "",
+    loading: () => null,
     ssr: false,
   }
 );
 
 const Weather = dynamic(() => import("@components/ui/weather"), {
-  loading: () => "",
+  loading: () => null,
   ssr: false,
 });
 
 const ImageDefault = dynamic(() => import("@components/ui/imgDefault"), {
-  loading: () => "",
+  loading: () => null,
 });
 
 const EventsAround = dynamic(() => import("@components/ui/eventsAround"), {
-  loading: () => "",
+  loading: () => null,
   ssr: false,
 });
 
 const Tooltip = dynamic(() => import("@components/ui/tooltip"), {
-  loading: () => "",
+  loading: () => null,
   ssr: false,
 });
 
 const Description = dynamic(() => import("@components/ui/common/description"), {
-  loading: () => "",
+  loading: () => null,
 });
 
 const VideoDisplay = dynamic(
   () => import("@components/ui/common/videoDisplay"),
   {
-    loading: () => "",
+    loading: () => null,
   }
 );
 
 const ViewCounter = dynamic(() => import("@components/ui/viewCounter"), {
-  loading: () => "",
+  loading: () => null,
   ssr: false,
 });
 
 const CardShareButton = dynamic(
   () => import("@components/ui/common/cardShareButton"),
   {
-    loading: () => "",
+    loading: () => null,
     ssr: false,
   }
 );
@@ -110,47 +119,38 @@ const CardShareButton = dynamic(
 const NativeShareButton = dynamic(
   () => import("@components/ui/common/nativeShareButton"),
   {
-    loading: () => "",
+    loading: () => null,
     ssr: false,
   }
 );
 
-function replaceURLs(text) {
-  if (!text) return;
+function replaceURLs(text: string | undefined): string | undefined {
+  if (!text) return undefined;
 
-  var urlRegex = /(((https?:\/\/)|(www\.))[^\s]+)/g;
-  return text.replace(urlRegex, function (url) {
-    var hyperlink = url;
+  const urlRegex = /(((https?:\/\/)|(www\.))[^\s]+)/g;
+  return text.replace(urlRegex, (url: string) => {
+    let hyperlink = url;
     if (!hyperlink.match("^https?://")) {
       hyperlink = "http://" + hyperlink;
     }
-    return (
-      '<a href="' +
-      hyperlink +
-      '" target="_blank" rel="noopener noreferrer">' +
-      url +
-      "</a>"
-    );
+    return `<a href="${hyperlink}" target="_blank" rel="noopener noreferrer">${url}</a>`;
   });
 }
 
-function isHTML(text) {
-  if (!text) return;
-
-  return text.match(/<[a-z][\s\S]*>/i);
+function isHTML(text: string | undefined): boolean {
+  if (!text) return false;
+  return !!text.match(/<[a-z][\s\S]*>/i);
 }
 
-// Helper function to sanitize input
-const sanitizeInput = (input) =>
+const sanitizeInput = (input: string): string =>
   input
-    .replace(/(<([^>]+)>)/gi, "") // Remove HTML tags
-    .replace(/&nbsp;/gi, " ") // Replace non-breaking spaces
-    .replace(/"/gi, "") // Remove double quotes
-    .replace(/\n/gi, " ") // Replace newline characters with space
-    .trim(); // Trim leading and trailing spaces
+    .replace(/(<([^>]+)>)/gi, "")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/"/gi, "")
+    .replace(/\n/gi, " ")
+    .trim();
 
-// Helper function to smartly truncate text to a max length without cutting words
-const smartTruncate = (text, maxLength) => {
+const smartTruncate = (text: string, maxLength: number): string => {
   if (text.length <= maxLength) return text;
   const lastSpaceIndex = text.substring(0, maxLength).lastIndexOf(" ");
   return lastSpaceIndex > maxLength - 20
@@ -158,7 +158,7 @@ const smartTruncate = (text, maxLength) => {
     : text.substring(0, maxLength);
 };
 
-function generateMetaDescription(title, description) {
+function generateMetaDescription(title: string, description: string): string {
   const titleSanitized = sanitizeInput(title);
   let metaDescription = titleSanitized;
 
@@ -167,48 +167,45 @@ function generateMetaDescription(title, description) {
     metaDescription += ` - ${descriptionSanitized}`;
   }
 
-  metaDescription = smartTruncate(metaDescription, 156);
-
-  return metaDescription;
+  return smartTruncate(metaDescription, 156);
 }
 
-function sanitizeAndTrim(input) {
-  // Helper function to sanitize and trim input strings
+function sanitizeAndTrim(input: string): string {
   return sanitizeInput(input).trim();
 }
 
-function appendIfFits(base, addition) {
-  // Helper function to append text if it fits within the character limit
+function appendIfFits(base: string, addition: string): string {
   const potentialTitle = `${base} - ${addition}`;
   return potentialTitle.length <= 60 ? potentialTitle : base;
 }
 
-function generateMetaTitle(title, description, location, town, region) {
+function generateMetaTitle(
+  title: string,
+  description: string,
+  location: string,
+  town: string,
+  region: string
+): string {
   const titleSanitized = sanitizeAndTrim(title);
   let metaTitle = smartTruncate(titleSanitized, 60);
-  let titleParts = [];
+  const titleParts: string[] = [];
 
-  // Add location if available
   if (location) {
     titleParts.push(sanitizeAndTrim(location));
   }
 
-  // Add town if it's distinct from location
   if (town && sanitizeAndTrim(town) !== titleParts[0]) {
     titleParts.push(sanitizeAndTrim(town));
   }
 
-  // Add region if it's distinct from previous parts
   if (region && !titleParts.includes(sanitizeAndTrim(region))) {
     titleParts.push(sanitizeAndTrim(region));
   }
 
-  // Attempt to append each part of the title if it fits
   titleParts.forEach((part) => {
     metaTitle = appendIfFits(metaTitle, part);
   });
 
-  // Append sanitized description if there's enough space and it's not empty
   if (
     description &&
     sanitizeAndTrim(description) !== "" &&
@@ -220,7 +217,13 @@ function generateMetaTitle(title, description, location, town, region) {
   return metaTitle;
 }
 
-function renderEventImage(image, title, location, nameDay, formattedStart) {
+function renderEventImage(
+  image: string | undefined,
+  title: string,
+  location: string,
+  nameDay: string,
+  formattedStart: string
+): JSX.Element {
   if (image) {
     return (
       <a
@@ -238,69 +241,89 @@ function renderEventImage(image, title, location, nameDay, formattedStart) {
         />
       </a>
     );
-  } else {
-    const date = `${nameDay} ${formattedStart}`;
-
-    return (
-      <div className="w-full">
-        <div className="w-full border-t"></div>
-        <ImageDefault date={date} location={location} alt={title} />
-      </div>
-    );
   }
+
+  const date = `${nameDay} ${formattedStart}`;
+
+  return (
+    <div className="w-full">
+      <div className="w-full border-t"></div>
+      <ImageDefault date={date} location={location} subLocation={title} />
+    </div>
+  );
 }
 
-export default function Event(props) {
-  const mapsRef = useRef();
-  const weatherRef = useRef();
-  const eventsAroundRef = useRef();
-  const editModalRef = useRef();
-  const isMapsVisible = useOnScreen(mapsRef, {
+export default function Event(props: EventProps): JSX.Element {
+  const mapsRef = useRef<HTMLDivElement>(null) as RefObject<HTMLDivElement>;
+  const weatherRef = useRef<HTMLDivElement>(null) as RefObject<HTMLDivElement>;
+  const eventsAroundRef = useRef<HTMLDivElement>(
+    null
+  ) as RefObject<HTMLDivElement>;
+  const editModalRef = useRef<HTMLDivElement>(
+    null
+  ) as RefObject<HTMLDivElement>;
+  const mapsDivRef = useRef<HTMLDivElement>(null);
+  const weatherDivRef = useRef<HTMLDivElement>(null);
+  const eventsAroundDivRef = useRef<HTMLDivElement>(null);
+  const editModalDivRef = useRef<HTMLDivElement>(null);
+
+  const isMapsVisible = useOnScreen(mapsRef as RefObject<Element>, {
     freezeOnceVisible: true,
   });
-  const isWeatherVisible = useOnScreen(weatherRef, {
+  const isWeatherVisible = useOnScreen(weatherRef as RefObject<Element>, {
     freezeOnceVisible: true,
   });
-  const isEditModalVisible = useOnScreen(editModalRef, {
+  const isEditModalVisible = useOnScreen(editModalRef as RefObject<Element>, {
     freezeOnceVisible: true,
   });
-  const isEventsAroundVisible = useOnScreen(eventsAroundRef, {
-    freezeOnceVisible: true,
-  });
+  const isEventsAroundVisible = useOnScreen(
+    eventsAroundRef as RefObject<Element>,
+    {
+      freezeOnceVisible: true,
+    }
+  );
+
   const { query } = useRouter();
-  const { newEvent, edit_suggested = false } = query;
-  const [openModal, setOpenModal] = useState(false);
+  const { newEvent, edit_suggested = false } = query as QueryParams;
+  const [openModal, setOpenModal] = useState<boolean>(false);
   const [openDeleteReasonModal, setOpenModalDeleteReasonModal] =
-    useState(false);
-  const [showThankYouBanner, setShowThankYouBanner] = useState(edit_suggested);
-  const [reasonToDelete, setReasonToDelete] = useState(null);
-  const [showMap, setShowMap] = useState(false);
+    useState<boolean>(false);
+  const [showThankYouBanner, setShowThankYouBanner] =
+    useState<boolean>(edit_suggested);
+  const [reasonToDelete, setReasonToDelete] = useState<DeleteReason>(null);
+  const [showMap, setShowMap] = useState<boolean>(false);
+
   const { data, error } = useGetEvent(props);
-  const slug = data.event ? data.event.slug : "";
-  const title = data.event ? data.event.title : "";
+  const slug = data?.event?.slug ?? "";
+  const title = data?.event?.title ?? "";
   const isMobile = useCheckMobileScreen();
 
   useEffect(() => {
-    sendGoogleEvent("view_event_page");
+    sendGoogleEvent("view_event_page", {});
   }, []);
 
-  const onSendDeleteReason = async () => {
+  const onSendDeleteReason = async (): Promise<void> => {
+    if (!data?.event) return;
+
     const { id, title } = data.event;
     setOpenModalDeleteReasonModal(false);
 
-    const rawResponse = await fetch(process.env.NEXT_PUBLIC_DELETE_EVENT, {
-      method: "DELETE",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        id,
-        title,
-        reason: reasonToDelete,
-        isProduction: process.env.NODE_ENV === "production",
-      }),
-    });
+    const rawResponse = await fetch(
+      process.env.NEXT_PUBLIC_DELETE_EVENT ?? "",
+      {
+        method: "DELETE",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id,
+          title,
+          reason: reasonToDelete,
+          isProduction: process.env.NODE_ENV === "production",
+        }),
+      }
+    );
 
     const { success } = await rawResponse.json();
 
@@ -311,17 +334,18 @@ export default function Event(props) {
     });
   };
 
-  const onRemove = () => {
+  const onRemove = (): void => {
     setOpenModal(false);
     setTimeout(() => setOpenModalDeleteReasonModal(true), 300);
-    sendGoogleEvent("open-delete-modal");
+    sendGoogleEvent("open-delete-modal", {});
   };
 
-  const handleShowMap = () => {
+  const handleShowMap = (): void => {
     setShowMap(!showMap);
   };
 
   if (error) return <div>failed to load</div>;
+  if (!data?.event) return <NoEventFound />;
 
   const {
     id,
@@ -370,9 +394,11 @@ export default function Event(props) {
 
   if (title === "CANCELLED") return <NoEventFound />;
 
-  const handleDirectionsClick = () => {
+  const handleDirectionsClick = (): void => {
     window.open(
-      `https://www.google.com/maps/dir/?api=1&destination=${location}`,
+      `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+        location
+      )}`,
       "_blank"
     );
   };
@@ -428,7 +454,6 @@ export default function Event(props) {
                 ) : (
                   <NativeShareButton
                     title={title}
-                    text={description}
                     url={slug}
                     date={eventDateString}
                     location={location}
@@ -503,7 +528,7 @@ export default function Event(props) {
             {showMap && (
               <div
                 className="w-full flex flex-col justify-center items-end gap-6"
-                ref={mapsRef}
+                ref={mapsDivRef}
               >
                 {isMapsVisible && <Maps location={mapsLocation} />}
                 <div className="w-fit flex justify-end items-center gap-2 px-4 border-b-2 border-whiteCorp hover:border-b-2 hover:border-blackCorp ease-in-out duration-300 cursor-pointer">
@@ -532,7 +557,7 @@ export default function Event(props) {
             {/* Weather */}
             <div
               className="w-full flex justify-center items-start gap-2 px-4"
-              ref={weatherRef}
+              ref={weatherDivRef}
             >
               <CloudIcon className="w-5 h-5 mt-1" />
               <div className="w-11/12 flex flex-col gap-4">
@@ -541,7 +566,7 @@ export default function Event(props) {
                   <Weather startDate={startDate} location={town} />
                 )}
               </div>
-              <span ref={eventsAroundRef} />
+              <span ref={eventsAroundDivRef} />
             </div>
             {/* More info */}
             <div className="w-full flex justify-center items-start gap-2 px-4">
@@ -578,7 +603,7 @@ export default function Event(props) {
             {/* EditButton */}
             <div
               className="w-full flex justify-center items-start gap-2 px-4"
-              ref={editModalRef}
+              ref={editModalDivRef}
             >
               <PencilIcon className="w-5 h-5 mt-1" />
               <div className="w-11/12 flex flex-col gap-4">
@@ -588,7 +613,7 @@ export default function Event(props) {
                     <div
                       onClick={() => {
                         setOpenModal(true);
-                        sendGoogleEvent("open-change-modal");
+                        sendGoogleEvent("open-change-modal", {});
                       }}
                       className="gap-2 ease-in-out duration-300 border-whiteCorp hover:border-blackCorp"
                     >
@@ -662,7 +687,11 @@ export async function getStaticPaths() {
   };
 }
 
-export async function getStaticProps({ params }) {
+export async function getStaticProps({
+  params,
+}: {
+  params: { eventId: string };
+}) {
   const { getCalendarEvent } = require("@lib/helpers");
   const eventId = params.eventId;
 

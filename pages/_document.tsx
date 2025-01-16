@@ -1,3 +1,4 @@
+import { JSX } from "react";
 import Document, {
   Html,
   Head,
@@ -9,20 +10,23 @@ import Document, {
 import { env } from "@utils/helpers";
 
 class MyDocument extends Document {
-  static async getInitialProps(ctx: DocumentContext): Promise<DocumentInitialProps> {
+  static async getInitialProps(
+    ctx: DocumentContext
+  ): Promise<DocumentInitialProps> {
     const initialProps = await Document.getInitialProps(ctx);
     return { ...initialProps };
   }
 
   render(): JSX.Element {
-    const meticulousScript = env === "dev" ? (
-      // eslint-disable-next-line @next/next/no-sync-scripts
-      <script
-        data-project-id={process.env.NEXT_PUBLIC_METICULOUS_PROJECT_ID}
-        data-is-production-environment="false"
-        src="https://snippet.meticulous.ai/v1/meticulous.js"
-      />
-    ) : null;
+    const meticulousScript =
+      env === "dev" ? (
+        // eslint-disable-next-line @next/next/no-sync-scripts
+        <script
+          data-project-id={process.env.NEXT_PUBLIC_METICULOUS_PROJECT_ID}
+          data-is-production-environment="false"
+          src="https://snippet.meticulous.ai/v1/meticulous.js"
+        />
+      ) : null;
 
     return (
       <Html>

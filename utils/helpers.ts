@@ -1,13 +1,9 @@
 // @ts-nocheck
 // I'll come back later
 import { Event } from "@store";
-import {
-  DAYS,
-  MONTHS,
-  CATEGORIES,
-  RegionData,
-} from "./constants";
+import { DAYS, MONTHS, CATEGORIES, RegionData } from "./constants";
 import { siteUrl } from "@config/index";
+import { getRegions } from "@lib/apiHelpers";
 
 export interface DateObject {
   date?: string;
@@ -96,8 +92,6 @@ interface SchemaOrgEvent {
   duration: string;
   video?: VideoObject;
 }
-
-const CITIES_DATA: Map<string, RegionData> = new Map([]);
 
 export const isLessThanFiveDays = (date: Date): boolean => {
   const currentDate = new Date();
@@ -341,119 +335,77 @@ export const generateJsonData = (event: Event): SchemaOrgEvent => {
   };
 };
 
-
-export const generateRegionsAndTownsOptions = (): {
-  label: string;
-  options: Option[];
-}[] => {
-  let regionsOptions = generateRegionsOptions();
+export const generateRegionsAndTownsOptions = async (): Promise<
+  {
+    label: string;
+    options: Option[];
+  }[]
+> => {
+  const regions = await getRegions();
+  const regionsOptions: Option[] = regions.map((region) => ({
+    label: region.name,
+    value: region.slug,
+  }));
   regionsOptions.sort((a, b) => a.label.localeCompare(b.label));
-  const townsOptions = [...CITIES_DATA.entries()]
-    .map(([_, region]) => ({
-      label: region.label,
-      options: [...region.towns.entries()]
-        .filter(([_, town]) => !town.hide)
-        .sort((a, b) => a[1].label.localeCompare(b[1].label))
-        .map(([townKey, town]) => ({
-          value: townKey,
-          label: town.label,
-        })),
-    }))
-    .sort((a, b) => a.label.localeCompare(b.label));
-  return [{ label: "Comarques", options: regionsOptions }, ...townsOptions];
+  return [{ label: "Comarques", options: regionsOptions }];
 };
 
-export const generateRegionsOptions = (): Option[] => {
-  return [...CITIES_DATA.entries()].map(([value, { label }]) => ({
-    value,
-    label,
+export const generateRegionsOptions = async (): Promise<Option[]> => {
+  const regions = await getRegions();
+  return regions.map((region) => ({
+    value: region.slug,
+    label: region.name,
   }));
 };
 
-export const getPlaceTypeAndLabel = (place: string): PlaceTypeAndLabel => {
-  for (const [region, regionData] of CITIES_DATA.entries() as IterableIterator<
-    [string, RegionData]
-  >) {
-    if (region === place) {
-      return { type: "region", label: regionData.label };
-    }
-    for (const town of regionData.towns) {
-      if (town === place) {
-        return { type: "town", label: town, regionLabel: regionData.label };
-      }
-    }
+export const getPlaceTypeAndLabel = async (
+  place: string
+): Promise<PlaceTypeAndLabel> => {
+  const regions = await getRegions();
+  const foundRegion = regions.find((region) => region.slug === place);
+  if (foundRegion) {
+    return { type: "region", label: foundRegion.name };
   }
   return { type: "town", label: place };
 };
 
 export const generateTownsOptions = (region: string): Option[] => {
-  const regionData = CITIES_DATA.get(region);
-  if (!regionData) return [];
-  return Array.from(regionData.towns.entries()).map(([townKey, townData]) => ({
-    value: townKey,
-    label: townData.label,
-  }));
+  return [];
 };
 
-export const getPlaceLabel = (place: string): string => {
-  for (const [region, regionData] of CITIES_DATA) {
-    if (region === place) return regionData.label;
-    if (Array.from(regionData.towns.keys()).includes(place)) return place;
+export const getPlaceLabel = async (place: string): Promise<string> => {
+  const regions = await getRegions();
+
+  const foundRegion = regions.find((region) => region.slug === place);
+  if (foundRegion) {
+    return foundRegion.name;
   }
   return place;
 };
 
-
-
 export const getTownLabel = (townValue: string): string => {
-  for (const [, region] of CITIES_DATA) {
-    const town = region.towns.get(townValue);
-    if (town) return town.label;
-  }
   return "";
 };
 
 export const getRegionLabelByValue = (regionValue: string): string => {
-  const region = CITIES_DATA.get(regionValue);
-  return region ? region.label : "";
+  return "";
 };
 
 export const getTownOptionsWithoutRegion = (town: string): Option[] => {
   const options: Option[] = [];
-  for (const [, region] of CITIES_DATA) {
-    region.towns.forEach((townData, townKey) => {
-      if (townKey === town) {
-        options.push({ value: townKey, label: townData.label });
-      }
-    });
-  }
+
   return options;
 };
 
 export const getRegionByTown = (town: string): string => {
-  for (const [regionKey, region] of CITIES_DATA) {
-    if (region.towns.has(town)) return regionKey;
-  }
   return "";
 };
 
 export const getRegionValueByLabel = (regionLabel: string): string => {
-  for (const [regionKey, region] of CITIES_DATA) {
-    if (region.label === regionLabel) return regionKey;
-  }
   return "";
 };
 
 export const getTownValueByLabel = (label: string): string | undefined => {
-  for (const [, region] of CITIES_DATA.entries() as IterableIterator<
-    [string, RegionData]
-  >) {
-    for (const town of region.towns) {
-      if (town.toLowerCase() === label.toLowerCase()) {
-        return town;
-      }
-    }
-  }
   return undefined;
 };
 

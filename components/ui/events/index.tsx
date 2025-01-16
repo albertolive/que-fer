@@ -18,17 +18,17 @@ const EventsList = dynamic(() => import("@components/ui/eventsList"), {
   ssr: true,
 });
 
-const EventsCategorized = dynamic(
-  () => import("@components/ui/eventsCategorized"),
-  {
-    loading: () => (
-      <div className="w-full flex-col justify-center items-center sm:w-[580px] md:w-[768px] lg:w-[1024px] mt-32">
-        <CardLoading />
-      </div>
-    ),
-    ssr: true,
-  }
-);
+// const EventsCategorized = dynamic(
+//   () => import("@components/ui/eventsCategorized"),
+//   {
+//     loading: () => (
+//       <div className="w-full flex-col justify-center items-center sm:w-[580px] md:w-[768px] lg:w-[1024px] mt-32">
+//         <CardLoading />
+//       </div>
+//     ),
+//     ssr: true,
+//   }
+// );
 
 /* eslint-disable no-unused-vars */
 function debounce<T extends (...args: any[]) => any>(
@@ -103,7 +103,7 @@ const Events: FC<EventsProps> = ({ events, hasServerFilters }) => {
       if (hasFilters) {
         await import("@components/ui/eventsList");
       } else {
-        await import("@components/ui/eventsCategorized");
+        await import("@components/ui/eventsList");
       }
       setIsLoading(false);
     };
@@ -151,7 +151,7 @@ const Events: FC<EventsProps> = ({ events, hasServerFilters }) => {
       ) : hasFilters ? (
         <EventsList events={events} />
       ) : (
-        <EventsCategorized />
+        <EventsList events={events} />
       )}
     </>
   );

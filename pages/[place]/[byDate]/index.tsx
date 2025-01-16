@@ -78,11 +78,7 @@ export const getStaticProps: GetStaticProps<
 
   const selectedFunction = dateFunctions[byDate] || today;
 
-  const { type, label, regionLabel } = getPlaceTypeAndLabel(place) as {
-    type: string;
-    label: string;
-    regionLabel: string;
-  };
+  const { type, label, regionLabel } = await getPlaceTypeAndLabel(place);
   const q = type === "town" ? `${label} ${regionLabel}` : label;
 
   const { from, until } = selectedFunction();
