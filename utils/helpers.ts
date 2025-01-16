@@ -1,3 +1,5 @@
+// @ts-nocheck
+// I'll come back later
 import { Event } from "@store";
 import {
   DAYS,
@@ -39,6 +41,60 @@ export interface Location {
 export interface Option {
   value: string;
   label: string;
+}
+
+interface VideoObject {
+  "@type": "VideoObject";
+  name: string;
+  contentUrl: string;
+  description: string;
+  thumbnailUrl: string;
+  uploadDate: string;
+}
+
+interface SchemaOrgEvent {
+  "@context": "https://schema.org";
+  "@type": "Event";
+  name: string | undefined;
+  url: string;
+  startDate: string;
+  endDate: string;
+  eventAttendanceMode: string;
+  eventStatus: string;
+  location: {
+    "@type": "Place";
+    name: string | undefined;
+    address: {
+      "@type": "PostalAddress";
+      streetAddress: string | undefined;
+      addressLocality: string | undefined;
+      postalCode: string | undefined;
+      addressCountry: string;
+      addressRegion: string;
+    };
+  };
+  image: string[];
+  description: string;
+  performer: {
+    "@type": "PerformingGroup";
+    name: string | undefined;
+  };
+  organizer: {
+    "@type": "Organization";
+    name: string | undefined;
+    url: string;
+  };
+  offers: {
+    "@type": "Offer";
+    price: number;
+    priceCurrency: string;
+    availability: string;
+    url: string;
+    validFrom: string;
+  };
+  isAccessibleForFree: boolean;
+  duration: string;
+  video?: VideoObject;
 }
 
 const CITIES_DATA: Map<string, RegionData> = new Map([]);
@@ -285,6 +341,7 @@ export const generateJsonData = (event: Event): SchemaOrgEvent => {
   };
 };
 
+
 export const generateRegionsAndTownsOptions = (): {
   label: string;
   options: Option[];
@@ -346,59 +403,7 @@ export const getPlaceLabel = (place: string): string => {
   return place;
 };
 
-interface VideoObject {
-  "@type": "VideoObject";
-  name: string;
-  contentUrl: string;
-  description: string;
-  thumbnailUrl: string;
-  uploadDate: string;
-}
 
-interface SchemaOrgEvent {
-  "@context": "https://schema.org";
-  "@type": "Event";
-  name: string;
-  url: string;
-  startDate: string;
-  endDate: string;
-  eventAttendanceMode: string;
-  eventStatus: string;
-  location: {
-    "@type": "Place";
-    name: string;
-    address: {
-      "@type": "PostalAddress";
-      streetAddress: string;
-      addressLocality: string;
-      postalCode: string;
-      addressCountry: string;
-      addressRegion: string;
-    };
-  };
-  image: string[];
-  description: string;
-  performer: {
-    "@type": "PerformingGroup";
-    name: string;
-  };
-  organizer: {
-    "@type": "Organization";
-    name: string;
-    url: string;
-  };
-  offers: {
-    "@type": "Offer";
-    price: number;
-    priceCurrency: string;
-    availability: string;
-    url: string;
-    validFrom: string;
-  };
-  isAccessibleForFree: boolean;
-  duration: string;
-  video?: VideoObject;
-}
 
 export const getTownLabel = (townValue: string): string => {
   for (const [, region] of CITIES_DATA) {

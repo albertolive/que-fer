@@ -5,10 +5,15 @@ import { MAX_RESULTS, SEARCH_TERMS_SUBSET } from "@utils/constants";
 import Events from "@components/ui/events";
 import { initializeStore } from "@utils/initializeStore";
 import type { GetStaticProps } from "next";
-import { Event, EventLocation } from "../store";
+import {
+  Event,
+  EventLocation,
+  EventCategory,
+  CategorizedEvents,
+} from "../store";
 
 interface InitialState {
-  categorizedEvents: Record<string, Event[]>;
+  categorizedEvents: CategorizedEvents;
   latestEvents: Event[];
   userLocation?: EventLocation | null;
   currentYear?: number;
@@ -25,12 +30,12 @@ export default function Home({ initialState }: HomeProps): JSX.Element {
 
   const { categorizedEvents } = initialState;
 
+  const allEvents = Object.values(categorizedEvents).flatMap(
+    (events) => events
+  );
   return (
     <>
-      <Events
-        events={categorizedEvents.events || []}
-        hasServerFilters={false}
-      />
+      <Events events={allEvents} hasServerFilters={false} />
     </>
   );
 }
@@ -39,7 +44,10 @@ export const getStaticProps: GetStaticProps<HomeProps> = async () => {
   const { from, until } = twoWeeksDefault();
 
   const initialState: InitialState = {
-    categorizedEvents: { events: [] },
+    categorizedEvents: Object.values(EventCategory).reduce((acc, category) => {
+      acc[category] = [];
+      return acc;
+    }, {} as Record<EventCategory, Event[]>),
     latestEvents: [],
   };
 
