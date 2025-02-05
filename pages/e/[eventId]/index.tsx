@@ -24,15 +24,9 @@ import { siteUrl } from "@config/index";
 import { sendGoogleEvent } from "@utils/analytics";
 import useCheckMobileScreen from "@components/hooks/useCheckMobileScreen";
 import AddToCalendar from "@components/ui/addToCalendar";
-import type {
-  EventProps,
-  EventData,
-  QueryParams,
-  EventRefs,
-  DynamicOptionsLoadingProps,
-  DeleteReason,
-} from "./types";
-import type { Event as EventType } from "@store";
+import type { QueryParams, DeleteReason } from "./types";
+import { EventDetailResponseDTO } from "types/api/event";
+import { getEvent } from "@lib/apiHelpers";
 
 const AdArticle = dynamic(() => import("@components/ui/adArticle"), {
   loading: () => null,
@@ -253,7 +247,9 @@ function renderEventImage(
   );
 }
 
-export default function Event(props: EventProps): JSX.Element {
+export default function Event(props: {
+  event: EventDetailResponseDTO;
+}): JSX.Element {
   const mapsRef = useRef<HTMLDivElement>(null) as RefObject<HTMLDivElement>;
   const weatherRef = useRef<HTMLDivElement>(null) as RefObject<HTMLDivElement>;
   const eventsAroundRef = useRef<HTMLDivElement>(
@@ -293,9 +289,9 @@ export default function Event(props: EventProps): JSX.Element {
   const [reasonToDelete, setReasonToDelete] = useState<DeleteReason>(null);
   const [showMap, setShowMap] = useState<boolean>(false);
 
-  const { data, error } = useGetEvent(props);
-  const slug = data?.event?.slug ?? "";
-  const title = data?.event?.title ?? "";
+  const event = useGetEvent(props);
+  const slug = event?.slug ?? "";
+  const title = event?.title ?? "";
   const isMobile = useCheckMobileScreen();
 
   useEffect(() => {
@@ -303,9 +299,9 @@ export default function Event(props: EventProps): JSX.Element {
   }, []);
 
   const onSendDeleteReason = async (): Promise<void> => {
-    if (!data?.event) return;
+    if (!event) return;
 
-    const { id, title } = data.event;
+    const { id, title } = event;
     setOpenModalDeleteReasonModal(false);
 
     const rawResponse = await fetch(
@@ -344,53 +340,40 @@ export default function Event(props: EventProps): JSX.Element {
     setShowMap(!showMap);
   };
 
-  if (error) return <div>failed to load</div>;
-  if (!data?.event) return <NoEventFound />;
+  if (!event) return <NoEventFound />;
 
   const {
     id,
     description,
     location,
-    town,
+    city,
     region,
-    postalCode,
-    mapsLocation,
     startDate,
     endDate,
     startTime,
     endTime,
-    isFullDayEvent,
-    nameDay,
-    formattedStart,
-    formattedEnd,
-    imageUploaded,
-    eventImage,
-    eventUrl,
-    videoUrl,
-    timeUntil,
-    durationInHours,
-  } = data.event;
+    imageUrl,
+    url,
+    visits,
+    categories,
+  } = event;
 
-  const image = imageUploaded || eventImage;
-
-  const eventDate = formattedEnd ? (
+  const eventDate = endDate ? (
     <>
-      <time dateTime={formattedStart}>Del {formattedStart}</time> al{" "}
-      <time dateTime={formattedEnd}>{formattedEnd}</time>
+      <time dateTime={startDate}>Del {startDate}</time> al{" "}
+      <time dateTime={endDate}>{endDate}</time>
     </>
   ) : (
     <>
-      <time dateTime={formattedStart}>
-        {nameDay}, {formattedStart}
-      </time>
+      <time dateTime={startDate}>{startDate}</time>
     </>
   );
 
-  const eventDateString = formattedEnd
-    ? `Del ${formattedStart} al ${formattedEnd}`
-    : `${nameDay}, ${formattedStart}`;
+  const eventDateString = endDate
+    ? `Del ${startDate} al ${endDate}`
+    : `${startDate}`;
 
-  const jsonData = generateJsonData({ ...data.event });
+  const jsonData = generateJsonData({ ...event });
 
   if (title === "CANCELLED") return <NoEventFound />;
 
@@ -406,13 +389,13 @@ export default function Event(props: EventProps): JSX.Element {
   return (
     <>
       <Meta
-        title={generateMetaTitle(title, "", location, town, region)}
+        title={generateMetaTitle(title, "", location, city.name, region.name)}
         description={generateMetaDescription(
-          `${title} - ${nameDay} ${formattedStart} - ${location}, ${town}, ${region}`,
+          `${title} - ${startDate} - ${location}, ${city.name}, ${region.name}`,
           description
         )}
         canonical={`${siteUrl}/e/${slug}`}
-        image={image}
+        image={imageUrl || ""}
         preload="/static/images/gMaps.webp"
       />
       <Script
@@ -436,15 +419,15 @@ export default function Event(props: EventProps): JSX.Element {
           <article className="w-full flex flex-col justify-center items-start gap-8">
             {/* Image */}
             <div className="w-full flex flex-col justify-center items-start gap-4">
-              {videoUrl ? (
-                <VideoDisplay videoUrl={videoUrl} />
+              {url ? (
+                <VideoDisplay videoUrl={url} />
               ) : (
                 renderEventImage(
-                  image,
+                  imageUrl,
                   title,
                   location,
-                  nameDay,
-                  formattedStart
+                  startDate,
+                  startDate
                 )
               )}
               {/* ShareButton */}
@@ -457,7 +440,7 @@ export default function Event(props: EventProps): JSX.Element {
                     url={slug}
                     date={eventDateString}
                     location={location}
-                    subLocation={`${town}, ${region}, ${postalCode}`}
+                    subLocation={`${city}, ${region}`}
                   />
                 )}
                 <ViewCounter slug={slug} />
@@ -476,15 +459,15 @@ export default function Event(props: EventProps): JSX.Element {
                 <div className="w-full flex flex-col gap-4">
                   <p>{eventDate}</p>
                   <p className="capitalize">
-                    {isFullDayEvent
-                      ? "Consultar horaris"
-                      : `${startTime} - ${endTime}`}
+                    {endDate
+                      ? `${startTime} - ${endTime}`
+                      : "Consultar horaris"}
                   </p>
                 </div>
                 <AddToCalendar
                   title={title}
                   description={description}
-                  location={`${location}, ${town}, ${region}, ${postalCode}`}
+                  location={`${location}, ${city.name}, ${region.name}`}
                   startDate={startDate}
                   endDate={endDate}
                   canonical={`${siteUrl}/e/${slug}`}
@@ -502,7 +485,7 @@ export default function Event(props: EventProps): JSX.Element {
                     <div className="w-full flex flex-col justify-start items-start gap-1">
                       <p>{location}</p>{" "}
                       <p>
-                        {town}, {region}, {postalCode}
+                        {city.name}, {region.name}
                       </p>
                     </div>
                     <div
@@ -530,7 +513,7 @@ export default function Event(props: EventProps): JSX.Element {
                 className="w-full flex flex-col justify-center items-end gap-6"
                 ref={mapsDivRef}
               >
-                {isMapsVisible && <Maps location={mapsLocation} />}
+                {isMapsVisible && <Maps location={location} />}
                 <div className="w-fit flex justify-end items-center gap-2 px-4 border-b-2 border-whiteCorp hover:border-b-2 hover:border-blackCorp ease-in-out duration-300 cursor-pointer">
                   <button
                     className="flex gap-2"
@@ -551,9 +534,12 @@ export default function Event(props: EventProps): JSX.Element {
               </div>
             </div>
             {/* Description */}
-            <Description description={description} location={town || region} />
-            {videoUrl &&
-              renderEventImage(image, title, location, nameDay, formattedStart)}
+            <Description
+              description={description}
+              location={city.name || region.name}
+            />
+            {url &&
+              renderEventImage(imageUrl, title, location, startDate, startDate)}
             {/* Weather */}
             <div
               className="w-full flex justify-center items-start gap-2 px-4"
@@ -563,7 +549,7 @@ export default function Event(props: EventProps): JSX.Element {
               <div className="w-11/12 flex flex-col gap-4">
                 <h2>El temps</h2>
                 {isWeatherVisible && (
-                  <Weather startDate={startDate} location={town} />
+                  <Weather startDate={startDate} location={city.name} />
                 )}
               </div>
               <span ref={eventsAroundDivRef} />
@@ -575,22 +561,23 @@ export default function Event(props: EventProps): JSX.Element {
                 <h2>Detalls de l&apos;Esdeveniment</h2>{" "}
                 <div className="flex justify-start items-center gap-2">
                   <div className="flex items-center gap-1 font-normal">
-                    {timeUntil}
+                    {/* timeUntil */}
                   </div>
                 </div>
-                {durationInHours && (
+                {/* durationInHours */}
+                {url && (
                   <div className="flex justify-start items-center gap-2">
                     <div className="flex items-center gap-1 font-normal">
-                      Durada aproximada: {durationInHours}
+                      {/* Durada aproximada: {durationInHours} */}
                     </div>
                   </div>
                 )}
-                {eventUrl && (
+                {url && (
                   <div className="font-bold">
                     Enllaç a l&apos;esdeveniment:
                     <a
                       className="text-primary hover:underline font-normal ml-1"
-                      href={eventUrl}
+                      href={url}
                       target="_blank"
                       rel="noreferrer"
                     >
@@ -645,8 +632,8 @@ export default function Event(props: EventProps): JSX.Element {
                   <EventsAround
                     id={id}
                     title={title}
-                    town={town}
-                    region={region}
+                    town={city.name}
+                    region={region.name}
                   />
                 </div>
               </div>
@@ -666,7 +653,6 @@ export default function Event(props: EventProps): JSX.Element {
               setOpenModal={setOpenModal}
               slug={slug}
               setOpenModalDeleteReasonModal={setOpenModalDeleteReasonModal}
-              sendGoogleEvent={sendGoogleEvent}
               openDeleteReasonModal={openDeleteReasonModal}
               setReasonToDelete={setReasonToDelete}
               reasonToDelete={reasonToDelete}
@@ -681,6 +667,14 @@ export default function Event(props: EventProps): JSX.Element {
 }
 
 export async function getStaticPaths() {
+  // Revisar si puc fer crida a getEvents
+  /* 
+    const events = await fetchAllEventIds();
+
+    const paths = events.map((event) => ({
+      params: { id: event.id },
+    }));
+  */
   return {
     paths: [],
     fallback: "blocking",
@@ -692,27 +686,19 @@ export async function getStaticProps({
 }: {
   params: { eventId: string };
 }) {
-  const { getCalendarEvent } = require("@lib/helpers");
-  const eventId = params.eventId;
+  try {
+    const response = await getEvent(params.eventId);
+    const event = response.data;
 
-  const { event } = await getCalendarEvent(eventId);
-
-  if (!event || !event.id) {
+    return {
+      props: {
+        event,
+      },
+      revalidate: 60,
+    };
+  } catch (error) {
     return {
       notFound: true,
     };
   }
-
-  event.description = isHTML(event.description)
-    ? event.description
-    : replaceURLs(event.description);
-
-  if (!event.description) {
-    event.description = "No hi ha cap descripció disponible.";
-  }
-
-  return {
-    props: { event },
-    revalidate: 60,
-  };
 }

@@ -9,7 +9,7 @@ interface DateObject {
 }
 
 interface WeatherProps {
-  startDate: DateObject;
+  startDate: DateObject | string;
   location: string;
 }
 

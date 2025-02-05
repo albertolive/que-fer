@@ -1,12 +1,15 @@
 import { siteUrl } from "@config/index";
 import useSWR, { preload } from "swr";
-import { Event } from "@store";
+import { EventDetailResponseDTO } from "types/api/event";
 
 interface EventProps {
-  event: Event;
+  event: EventDetailResponseDTO;
 }
 
-const fetchWithId = async ([url, id]: [string | null, string]): Promise<Event> => {
+const fetchWithId = async ([url, id]: [
+  string | null,
+  string
+]): Promise<EventDetailResponseDTO> => {
   if (!url || !id) {
     throw new Error("URL and ID are required");
   }
@@ -14,17 +17,16 @@ const fetchWithId = async ([url, id]: [string | null, string]): Promise<Event> =
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);
   }
-  const data = await response.json();
-  return { event: data };
+  return response.json();
 };
 
-export const useGetEvent = (props: EventProps) => {
+export const useGetEvent = (props: EventProps): EventDetailResponseDTO => {
   const eventId = props.event.slug;
 
   preload([eventId ? `/api/getEvent` : null, eventId], fetchWithId);
 
-  return useSWR<Event>([eventId ? `/api/getEvent` : null, eventId], fetchWithId, {
-    fallbackData: props,
+  return useSWR([eventId ? `/api/getEvent` : null, eventId], fetchWithId, {
+    fallbackData: props.event,
     refreshInterval: 300000,
     revalidateOnFocus: true,
     revalidateOnReconnect: true,
@@ -32,5 +34,5 @@ export const useGetEvent = (props: EventProps) => {
     suspense: true,
     keepPreviousData: true,
     revalidateOnMount: false,
-  });
+  }).data;
 };

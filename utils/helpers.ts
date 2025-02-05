@@ -4,6 +4,7 @@ import { Event } from "@store";
 import { DAYS, MONTHS, CATEGORIES, RegionData } from "./constants";
 import { siteUrl } from "@config/index";
 import { getRegions } from "@lib/apiHelpers";
+import { EventDetailResponseDTO } from "types/api/event";
 
 export interface DateObject {
   date?: string;
@@ -257,7 +258,9 @@ export const monthsName: string[] = [
   "desembre",
 ];
 
-export const generateJsonData = (event: Event): SchemaOrgEvent => {
+export const generateJsonData = (
+  event: EventDetailResponseDTO
+): SchemaOrgEvent => {
   const {
     title,
     slug,

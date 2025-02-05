@@ -1,4 +1,12 @@
-import { memo, useRef, useState, useCallback, useMemo, MouseEvent } from "react";
+import {
+  memo,
+  useRef,
+  useState,
+  useCallback,
+  useMemo,
+  MouseEvent,
+  JSX,
+} from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
@@ -32,7 +40,11 @@ const ShareButton = dynamic(
   }
 );
 
-function CardContent({ event, isPriority = false, isHorizontal = false }: CardContentProps): JSX.Element {
+function CardContent({
+  event,
+  isPriority = false,
+  isHorizontal = false,
+}: CardContentProps): JSX.Element {
   const counterRef = useRef<HTMLDivElement>(null);
   const shareRef = useRef<HTMLDivElement>(null);
   const isCounterVisible = useOnScreen(counterRef, {

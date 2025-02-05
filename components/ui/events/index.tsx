@@ -46,7 +46,7 @@ function debounce<T extends (...args: any[]) => any>(
 
 interface EventsProps {
   events: Event[];
-  hasServerFilters: boolean;
+  hasServerFilters?: boolean;
 }
 
 const Events: FC<EventsProps> = ({ events, hasServerFilters }) => {

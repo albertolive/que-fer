@@ -1,9 +1,18 @@
 import { RefObject } from "react";
-import { Event } from "@store";
+import { EventDetailResponseDTO } from "types/api/event";
 
-export interface EventData extends Event {
-  mapsLocation: string;
-  timeUntil: string;
+export interface EventData extends EventDetailResponseDTO {
+  // Computed fields that we add to the base DTO
+  mapsLocation?: string;
+  timeUntil?: string;
+  nameDay?: string;
+  formattedStart?: string;
+  formattedEnd?: string;
+  isFullDayEvent?: boolean;
+  durationInHours?: number;
+  eventImage?: string;
+  eventUrl?: string;
+  videoUrl?: string;
 }
 
 export interface EventProps {

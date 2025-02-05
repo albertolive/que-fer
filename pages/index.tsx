@@ -9,7 +9,6 @@ import { Event, EventLocation } from "../store";
 interface InitialState {
   events: Event[];
   noEventsFound: boolean;
-  hasServerFilters: boolean;
   userLocation?: EventLocation | null;
   currentYear?: number;
 }
@@ -27,7 +26,7 @@ export default function Home({ initialState }: HomeProps): JSX.Element {
 
   return (
     <>
-      <Events events={events} hasServerFilters={false} />
+      <Events events={events} />
     </>
   );
 }
@@ -47,7 +46,6 @@ export const getStaticProps: GetStaticProps<HomeProps> = async () => {
 
   const initialState: InitialState = {
     events,
-    hasServerFilters: true,
     noEventsFound,
   };
 
